@@ -99,3 +99,69 @@ Once merged, your code is safely in `dev`! You can now pull the latest `dev` and
 ```
 
 ```
+
+
+## 🔥 5. Commit Message Format
+Use clear, consistent commit messages so the team understands what changed:
+
+```bash
+feat: short description of new feature
+fix: short description of what was broken
+chore: dependency updates, config changes
+ui: visual/layout changes
+docs: readme or documentation updates
+```
+
+**Examples:**
+```bash
+git commit -m "feat: added water quality alert system"
+git commit -m "fix: corrected GPS coordinate parsing"
+git commit -m "ui: updated dashboard colour scheme"
+```
+
+---
+
+## 🚨 6. Conflict Resolution Protocol
+If you hit a merge conflict when pulling from `dev`:
+
+```bash
+# 1. Pull latest dev into your branch
+git pull origin dev
+
+# 2. Git will flag conflicting files — open them in your editor
+# Look for conflict markers and resolve them:
+# <<<<<<< HEAD        (your changes)
+# =======             (divider)
+# >>>>>>> origin/dev  (incoming changes)
+
+# 3. After resolving, stage and commit
+git add .
+git commit -m "fix: resolved merge conflict with dev"
+
+# 4. Let the team know in the group chat what you resolved
+```
+
+> **Rule:** Never resolve conflicts by blindly accepting all incoming or all current changes. Read both sides first.
+
+---
+
+## 🛑 7. Things You Must Never Do
+
+| ❌ Never | ✅ Instead |
+|---|---|
+| `git push origin main` | Open a PR into `dev` only |
+| `git push --force` | Coordinate with the team first |
+| Commit directly on `dev` | Always work on your personal branch |
+| Merge your own PR without review | Get at least one teammate to approve |
+| Commit `.env` files or secrets | Add them to `.gitignore` |
+
+---
+
+## ✅ 8. Pre-Merge Checklist
+Before opening a Pull Request, confirm:
+
+- [ ] My feature works locally without breaking other parts of the app
+- [ ] I have pulled the latest `dev` into my branch and resolved any conflicts
+- [ ] I am merging into `dev`, **not** `main`
+- [ ] I have written a clear PR title and description
+- [ ] I have tagged a teammate to review
