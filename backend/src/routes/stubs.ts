@@ -1,67 +1,63 @@
 import { Router } from "express";
+import { db } from "../db";
+import { biomassBatches } from "../db/schema/biomassBatches";
+import { eq } from "drizzle-orm";
 
 export const routes = Router();
 
-routes.get("/api/batches", (req, res) => {
+// 1. GET /api/batches → Fetch all 'available' batches from the live DB
+routes.get("/api/batches", async (req, res) => {
+    try {
+        const batches = await db
+            .select()
+            .from(biomassBatches)
+            .where(eq(biomassBatches.status, "available"));
+
+        res.json({
+            success: true,
+            data: batches,
+        });
+    } catch (error) {
+        console.error("Error fetching batches:", error);
+        res.status(500).json({ success: false, error: "Failed to fetch database records" });
+    }
+});
+
+// 2. GET /api/batches/:id → Stubbed yield predictions
+routes.get("/api/batches/:id", (req, res) => {
+    const { id } = req.params;
+
     res.json({
         success: true,
-        data: [
-            {
-                id: 1,
-                harvesterId: 1,
-                weightKg: "45.5",
-                locationCoordinates: "-0.1432,34.7391",
-                status: "available",
-                createdAt: new Date().toISOString(),
+        data: {
+            batchId: parseInt(id),
+            yieldPredictions: {
+                estimatedBiogasM3: 45.2,
+                estimatedFertilizerKg: 12.5,
+                moistureContentPercentage: 88,
             },
-            {
-                id: 2,
-                harvesterId: 1,
-                weightKg: "120.0",
-                locationCoordinates: "-0.1032,34.7521",
-                status: "available",
-                createdAt: new Date().toISOString(),
-            },
-            {
-                id: 3,
-                harvesterId: 1,
-                weightKg: "75.2",
-                locationCoordinates: "-0.1194,34.7314",
-                status: "claimed",
-                createdAt: new Date().toISOString(),
-            }
-        ],
+        },
     });
 });
 
-routes.get("/api/transactions", (req, res) => {
+// 3. GET /api/impact → Stubbed environmental impact metrics
+routes.get("/api/impact", (req, res) => {
     res.json({
         success: true,
-        data: [
-            {
-                id: 1,
-                batchId: 3,
-                buyerId: 1,
-                payoutAmount: "1500.00",
-                mpesaReceiptNumber: "QWE123RTY",
-                status: "completed",
-                createdAt: new Date().toISOString(),
-            }
-        ],
+        data: {
+            totalTonnes: 0,
+            lakeAreaClearedM2: 0,
+            co2eAvoided: 0,
+        },
     });
 });
 
-routes.get("/api/sms", (req, res) => {
+// 4. GET /api/price → Stubbed constant price
+routes.get("/api/price", (req, res) => {
     res.json({
         success: true,
-        data: [
-            {
-                id: 1,
-                senderPhone: "+254712345678",
-                rawMessage: "I have 45kg of water hyacinth at Dunga",
-                parsedSuccessfully: true,
-                createdAt: new Date().toISOString(),
-            }
-        ],
+        data: {
+            price_kes_per_kg: 9,
+        },
     });
 });
