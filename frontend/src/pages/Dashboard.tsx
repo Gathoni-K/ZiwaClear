@@ -1,10 +1,13 @@
+import { Sidebar } from "../components/Sidebar";
+import { DashboardMap } from "../components/DashboardMap";
+
 function Dashboard() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="text-muted mt-2">
-        Available biomass, map, and live impact widgets will go here.
-      </p>
+    <div className="flex h-full">
+      <Sidebar />
+      <div className="flex-1 relative">
+        <DashboardMap />
+      </div>
     </div>
   );
 }
