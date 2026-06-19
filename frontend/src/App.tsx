@@ -1,4 +1,6 @@
 import { ThemeToggle } from "./components/ThemeToggle";
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
 
 function App() {
   return (
@@ -7,6 +9,9 @@ function App() {
         <h1 className="text-xl font-bold">ZiwaClear</h1>
         <ThemeToggle />
       </header>
+      <main>
+        <RouterProvider router={router} />
+      </main>
     </div>
   );
 }
