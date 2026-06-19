@@ -34,3 +34,14 @@
     import { sql } from "drizzle-orm";
 
     //for every file where the policy has been defined, add the line above.
+
+3.
+![alt text](image-1.png)
+
+-The error is a rsult of a mix-up of Drizzle ORM methods.
+
+-What cause the error, it is TS' way of telling us that we are passing the wrong shape of data into the '.execute()' function.
+
+-Currently, a callback function is being passed, but in Drizzle, these functions are used for transactions.
+
+**FIX:** Import the sql helper from Drizzle and pass inthe raw query directly into the '.execute()'

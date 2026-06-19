@@ -85,5 +85,111 @@
 -The general template for handling this on table creation would be:
 
     export const myTable = pgTable("table_name", {
- 
+    // Columns...
+    }, (table) => [
+    pgPolicy("clear_descriptive_name", {
+        for: "select" | "insert" | "update" | "delete" | "all",
+        to: "anon" | "authenticated" | "public",
+        using: sql`boolean_expression`,
+        withCheck: sql`boolean_expression` // Optional: Only for write verification (INSERT/UPDATE)
+    })
+    ]).enableRLS();
 
+
+## 3.Creating a Seed Script.
+
+-The standard database-first workflow follows the order below:
+
+1.Define schema and migration tables.
+2.Seed the sample data.
+3.Build the app architecture(Services,Controllers etc etc)
+
+### 3.1.Create the Seed Script.
+
+-The goal is to write a self-contained script that inserts a dummy harvester first, then creates 5 sample batches mapped to real coordinates around the Kisumu region on our Leaflet map.
+
+-When writing a seed script, always ensure to follow the rules below:
+
+1. Honor the foreign key constraints. You cannot insert data into a column dependent on another if the item does not already exist on the former table.
+
+2. Enable idempotency - no matter how many times the script is run, the result is the same.
+-A great seed script either cleans up before it runs or uses 'upserts' - on conflict it should do nothing.
+
+3. Cleanly terminate the process - 'process.exit(0)' at the very end should be included at the very end of our script.
+
+-Create a new file:
+
+    //src/db/seed/ts
+    import { db } from "./index";
+    import { harvesters, biomassBatches } from "./schema";
+
+    async function main() {
+    console.log("⏳ Seeding database...");
+
+    // 1. Insert a mock harvester so our batches can reference them
+    const [mockHarvester] = await db.insert(harvesters).values({
+        phoneNumber: "+254712345678",
+        name: "John Omondi",
+        location: "Dunga Beach",
+    }).returning({ id: harvesters.id });
+
+    if (!mockHarvester) {
+        throw new Error("Failed to create mock harvester for seeding.");
+    }
+
+    // 2. Insert 5 sample biomass batches around Lake Victoria coordinates
+    await db.insert(biomassBatches).values([
+        {
+        harvesterId: mockHarvester.id,
+        weightKg: "45.5",
+        locationCoordinates: "-0.1432,34.7391", // Dunga Beach area
+        status: "available",
+        },
+        {
+        harvesterId: mockHarvester.id,
+        weightKg: "120.0",
+        locationCoordinates: "-0.1032,34.7521", // Kisumu City Pier area
+        status: "available",
+        },
+        {
+        harvesterId: mockHarvester.id,
+        weightKg: "75.2",
+        locationCoordinates: "-0.1194,34.7314", // Hippo Point area
+        status: "claimed",
+        },
+        {
+        harvesterId: mockHarvester.id,
+        weightKg: "90.3",
+        locationCoordinates: "-0.0512,34.6012", // Kombewa area
+        status: "available",
+        },
+        {
+        harvesterId: mockHarvester.id,
+        weightKg: "60.0",
+        locationCoordinates: "-0.2831,34.3412", // Homa Bay area
+        status: "paid",
+        },
+    ]);
+
+    console.log("✅ Database seeded successfully with 5 sample batches!");
+    process.exit(0);
+    }
+
+    main().catch((err) => {
+    console.error("❌ Seeding failed:", err);
+    process.exit(1);
+    });
+
+
+-Add a seed shortcut to package.json file.
+
+    "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/db/seed.ts"
+    }
+
+-Run the seed script using:
+
+    npm run db:seed
