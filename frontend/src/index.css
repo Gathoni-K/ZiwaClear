@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* 1. Set up the CSS variables for Light / Dark mode */
+@layer base {
+
+  /* LIGHT MODE (Default) */
+  :root {
+    --bg-app: #F8FAFC;
+    --bg-tile: #FFFFFF;
+    --text-main: #020617;
+    --text-muted: #64748B;
+    --border-ui: #E2E8F0;
+    --input-bg: #F1F5F9;
+  }
+
+  /* DARK MODE (Triggered by adding the 'dark' class to <html> or <body>) */
+  .dark {
+    --bg-app: #020617;
+    --bg-tile: #111827;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-ui: #334155;
+    --input-bg: #1F2937;
+  }
+
+  /* Apply the base theme to the document */
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* 2. Inject your Brand Kit into Tailwind's v4 @theme directive */
+@theme {
+  /* Semantic Variables (These will dynamically switch based on the mode) */
+  --color-background: var(--bg-app);
+  --color-tile: var(--bg-tile);
+  --color-foreground: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-border-ui: var(--border-ui);
+  --color-input: var(--input-bg);
+
+  /* Core Brand Colors (These stay the same in both modes based on your swatches) */
+  --color-primary: #2DD4BF;
+  --color-primary-hover: #29C2AD;
+  --color-secondary: #22D3EE;
+  --color-tertiary: #FFAC5A;
+  --color-danger: #EF4444;
+
+  /* Typography */
+  --font-sans: "Inter", sans-serif;
+
+  /* Specific Shape Radii from your kit */
+  --radius-tile: 2rem;
+  --radius-input: 0.75rem;
+  --radius-pill: 9999px;
+}
+
+/* 3. Enable class-based dark mode variant for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
