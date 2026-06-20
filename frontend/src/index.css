@@ -1,3 +1,4 @@
+@import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
 /* 1. Set up the CSS variables for Light / Dark mode */
