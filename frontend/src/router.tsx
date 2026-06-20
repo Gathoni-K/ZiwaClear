@@ -1,0 +1,21 @@
+import { createBrowserRouter } from "react-router-dom";
+import { Layout } from "./layout/Layout";
+import Dashboard from "./pages/Dashboard";
+import ClaimedBatches from "./pages/ClaimedBatches";
+import Transactions from "./pages/Transactions";
+import Impact from "./pages/Impact";
+import NotFound from "./pages/NotFound";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: "claimed-batches", element: <ClaimedBatches /> },
+      { path: "transactions", element: <Transactions /> },
+      { path: "impact", element: <Impact /> },
+      { path: "*", element: <NotFound /> },
+    ],
+  },
+]);
