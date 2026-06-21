@@ -1,14 +1,8 @@
 import { useBatches } from "../hooks/useBatches";
-import { BatchCard } from "./BatchCard";
+import { timeAgo } from "../lib/timeAgo";
 
-interface SidebarProps {
-  selectedBatchId: string | null;
-  onSelectBatch: (id: string) => void;
-}
-
-export function Sidebar({ selectedBatchId, onSelectBatch }: SidebarProps) {
+export function Sidebar() {
   const { data: batches, isLoading, isError } = useBatches();
-  const availableBatches = batches?.filter((b) => b.status === "available");
 
   return (
     <aside className="w-[340px] h-full overflow-y-auto bg-tile border-r border-border-ui p-5 flex flex-col gap-4">
@@ -40,21 +34,32 @@ export function Sidebar({ selectedBatchId, onSelectBatch }: SidebarProps) {
         </p>
       )}
 
-      {availableBatches && availableBatches.length === 0 && (
-        <p className="text-sm text-muted">No available batches right now.</p>
-      )}
-
-      {availableBatches && availableBatches.length > 0 && (
+      {batches && (
         <div className="flex flex-col gap-3 mt-2">
-          {availableBatches.map((batch) => (
-            <BatchCard
+          {batches.map((batch) => (
+            <div
               key={batch.id}
-              batch={batch}
-              actionLabel="Reserve Batch"
-              onAction={(b) => console.log("Reserve clicked:", b.id)}
-              isSelected={batch.id === selectedBatchId}
-              onSelect={(b) => onSelectBatch(b.id)}
-            />
+              className="rounded-tile bg-input border border-border-ui p-4"
+            >
+              <div className="flex items-baseline justify-between">
+                <span className="text-xl font-bold text-primary">
+                  {batch.weightKg.toLocaleString()} kg
+                </span>
+                <span className="text-xs text-muted">
+                  {timeAgo(batch.collectedAt)}
+                </span>
+              </div>
+              <p className="text-sm font-medium mt-1">{batch.locationName}</p>
+              <p className="text-xs text-tertiary mt-1">
+                ★ {batch.verificationRating}/5 Certified
+              </p>
+              <button
+                type="button"
+                className="w-full mt-3 py-2 rounded-pill bg-primary text-background font-semibold text-sm hover:bg-primary-hover transition-colors"
+              >
+                Reserve Batch
+              </button>
+            </div>
           ))}
         </div>
       )}
