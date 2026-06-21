@@ -5,6 +5,6 @@ export function useBatches() {
   return useQuery({
     queryKey: ["batches"],
     queryFn: fetchBatches,
-    refetchInterval: 30_000, // poll every 30s to mimic "LIVE" updates
+    refetchInterval: 20_000, // poll every 20s to mimic "LIVE" updates
   });
 }
