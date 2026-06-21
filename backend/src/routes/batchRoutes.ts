@@ -9,6 +9,7 @@ export const batchRouter = Router();
 batchRouter.get("/", batchController.listAvailable);
 batchRouter.get("/all", batchController.list);
 batchRouter.get("/impact", batchController.getImpact);
+batchRouter.get("/price", batchController.getPrice);
 batchRouter.get("/:id", batchController.getById);
 
 // Action routes

@@ -5,5 +5,5 @@ export const authenticateAPIKey = (req: Request, res: Response, next: NextFuncti
     if (!apiKey || apiKey !== process.env.SMS_API_KEY) {
         return res.status(401).json({ success: false, message: "Unauthorized: Invalid or missing API key" });
     }
-    next();
+    return next();
 };

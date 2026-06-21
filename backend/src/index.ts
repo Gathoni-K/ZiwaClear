@@ -7,6 +7,7 @@ import { sql } from "drizzle-orm";
 // Import real routes
 import { smsRouter } from "./routes/smsRoutes";
 import { batchRouter } from "./routes/batchRoutes";
+import { chatRouter } from "./routes/chatRoutes";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get("/health", async (req, res) => {
 // Mount routes
 app.use("/api/sms", smsRouter);
 app.use("/api/batches", batchRouter);
+app.use("/api/chat", chatRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -39,9 +41,12 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Health: http://localhost:${PORT}/health`);
     console.log(`SMS webhook: http://localhost:${PORT}/api/sms/incoming`);
     console.log(`Batches: http://localhost:${PORT}/api/batches`);
     console.log(`Impact: http://localhost:${PORT}/api/batches/impact`);
+    console.log(`Price: http://localhost:${PORT}/api/batches/price`);
+    console.log(`Chat: http://localhost:${PORT}/api/chat`);
 });
 
 export default app;

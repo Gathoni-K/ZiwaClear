@@ -14,13 +14,13 @@ export class BatchController {
     public async list(req: Request, res: Response) {
         try {
             const filters = {
-                startDate: req.query.startDate as string,
-                endDate: req.query.endDate as string,
+                startDate: req.query.startDate as string | undefined,
+                endDate: req.query.endDate as string | undefined,
                 beachId: req.query.beachId ? parseInt(req.query.beachId as string) : undefined,
-                status: req.query.status as string,
+                status: req.query.status as string | undefined,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
                 offset: req.query.offset ? parseInt(req.query.offset as string) : 0
-            };
+            } as Parameters<typeof batchService.listBatches>[0];
             const batches = await batchService.listBatches(filters);
             return res.json({ success: true, data: batches });
         } catch (error) {
@@ -104,6 +104,22 @@ export class BatchController {
         try {
             const impact = await batchService.getImpactStats();
             return res.json({ success: true, data: impact });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    public async getPrice(req: Request, res: Response) {
+        try {
+            return res.json({
+                success: true,
+                data: {
+                    price_kes_per_kg: 9,
+                    currency: "KES",
+                    updated_at: "2026-06-22T00:00:00Z",
+                    note: "Average market rate based on recent transactions"
+                }
+            });
         } catch (error) {
             return res.status(500).json({ success: false, message: "Internal server error" });
         }

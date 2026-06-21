@@ -1,5 +1,3 @@
-import { ParsedSMSData } from "../services/sms";
-
 export interface CreateSMSRecord {
     rawMessage: string;
     senderPhone: string;
