@@ -5,18 +5,32 @@ export class SMSController {
     public async receiveSMS(req: Request, res: Response) {
         try {
             const { message, sender, received_at } = req.body;
-            
-            const smsRecord = await smsService.processIncomingSMS(message, sender);
-            
-            return res.status(202).json({
+
+            const result = await smsService.processIncomingSMS(message, sender);
+
+            let replyMessage: string;
+
+            if (result.success && result.batch) {
+                replyMessage = `Imethibitishwa: ${result.batch.quantityKg}kg ${result.batch.locationName}. Rejesta: ${result.batch.id?.substring(0, 8)}. Utapata taarifa mnunuzi anapochukua.`;
+            } else if (result.success && !result.batch) {
+                replyMessage = "Tumepokea ujumbe wako lakini hatukuweza kutambua eneo au uzito. Tuma mfano: 100kg Dunga";
+            } else {
+                replyMessage = "Samahani, hatujaelewa ujumbe wako. Tuma mfano: 100kg Dunga";
+            }
+
+            return res.status(200).json({
                 success: true,
-                sms_id: smsRecord.id,
-                status: "received",
-                message: "SMS received and queued for processing"
+                sms_id: result.smsRecord?.id || null,
+                batch_id: result.batch?.id || null,
+                reply_message: replyMessage,
+                status: result.success ? "processed" : "failed"
             });
         } catch (error: any) {
             if (error.message.includes("Duplicate message")) {
-                return res.status(409).json({ success: false, message: error.message });
+                return res.status(200).json({
+                    success: true,
+                    message: "Duplicate message ignored"
+                });
             }
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
@@ -25,6 +39,9 @@ export class SMSController {
     public async getSMS(req: Request, res: Response) {
         try {
             const { id } = req.params;
+            if (!id || typeof id !== "string") {
+                return res.status(400).json({ success: false, message: "Invalid ID" });
+            }
             const record = await smsService.getById(id);
             if (!record) return res.status(404).json({ success: false, message: "SMS not found" });
             return res.json({ success: true, data: record });
@@ -40,44 +57,12 @@ export class SMSController {
                 endDate: req.query.endDate as string,
                 beachId: req.query.beachId ? parseInt(req.query.beachId as string) : undefined,
                 batchId: req.query.batchId as string,
-                parsedSuccessfully: req.query.parsedSuccessfully ? req.query.parsedSuccessfully === "true" : undefined,
-                processed: req.query.processed ? req.query.processed === "true" : undefined,
+                parsedSuccessfully: req.query.parsedSuccessfully === "true" ? true : req.query.parsedSuccessfully === "false" ? false : undefined,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
                 offset: req.query.offset ? parseInt(req.query.offset as string) : 0
             };
             const records = await smsService.listSMS(filters);
             return res.json({ success: true, data: records });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: "Internal server error" });
-        }
-    }
-
-    public async reprocess(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const record = await smsService.reprocess(id);
-            return res.json({ success: true, data: record });
-        } catch (error: any) {
-            if (error.message === "SMS not found") return res.status(404).json({ success: false, message: error.message });
-            if (error.message.includes("already parsed")) return res.status(400).json({ success: false, message: error.message });
-            return res.status(500).json({ success: false, message: "Internal server error" });
-        }
-    }
-
-    public async getStats(req: Request, res: Response) {
-        try {
-            const stats = await smsService.getStats();
-            return res.json({ success: true, data: stats });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: "Internal server error" });
-        }
-    }
-
-    public async cleanup(req: Request, res: Response) {
-        try {
-            const days = parseInt(req.query.days as string) || 30;
-            await smsService.deleteOlderThan(days);
-            return res.json({ success: true, message: `Cleaned up SMS older than ${days} days` });
         } catch (error) {
             return res.status(500).json({ success: false, message: "Internal server error" });
         }

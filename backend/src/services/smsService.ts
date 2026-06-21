@@ -1,8 +1,7 @@
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { sms, beaches } from "../db/schema";
-import { smsParser } from "./sms";
-import { CreateSMSRecord, SMSFilters } from "../types/sms";
+import { smsParser } from "./sms/smsParser";
 import { batchService } from "./batchService";
 
 export class SMSService {
@@ -14,7 +13,7 @@ export class SMSService {
         ));
 
         if (recentDuplicate.length > 0) {
-            throw new Error("Duplicate message detected within 60 seconds");
+            throw new Error("Duplicate message detected");
         }
 
         const [smsRecord] = await db.insert(sms).values({
@@ -22,58 +21,85 @@ export class SMSService {
             senderPhone,
         }).returning();
 
-        this.parseAndStore(smsRecord).catch(err => console.error("Async parsing failed:", err));
 
-        return smsRecord;
-    }
+        if (!smsRecord) {
+            throw new Error("Failed to create SMS database record.");
+        }
 
-    public async parseAndStore(smsRecord: any) {
         try {
-            const parsedData = await smsParser.parseSMS(smsRecord.rawMessage);
-            
-            let beachId = null;
-            if (parsedData.beach_name) {
+            const parsedData = await smsParser.parseSMS(rawMessage);
+
+
+            const locationName: string | null = (parsedData as any).location || (parsedData as any).beach_name || null;
+
+            let beachId: number | null = null;
+            if (locationName) {
                 const [beach] = await db.select().from(beaches).where(
-                    sql`lower(name) = lower(${parsedData.beach_name})`
+                    sql`lower(${beaches.name}) = lower(${locationName})`
                 );
                 if (beach) beachId = beach.id;
             }
 
             await db.update(sms).set({
-                parsedData,
+                parsedData: parsedData as any,
                 parsedSuccessfully: true,
-                parseAttempts: smsRecord.parseAttempts + 1,
-                confidenceScore: parsedData.confidence_score?.toString() || "0",
                 beachId,
                 parseError: null
             }).where(eq(sms.id, smsRecord.id));
 
-            if (beachId) {
-                await batchService.autoBatchSMS();
+            const quantityKg: number | null = (parsedData as any).quantity_kg || null;
+
+            if (quantityKg && locationName) {
+                const batch = await batchService.createBatchFromSMS({
+                    quantityKg,
+                    locationName,
+                    harvesterPhone: senderPhone,
+                    beachId
+                });
+
+                // Guard Check: Protects TypeScript from evaluating batch as possibly 'undefined'
+                if (!batch) {
+                    throw new Error("Failed to create batch associated with the processed SMS record.");
+                }
+
+                await db.update(sms).set({ batchId: batch.id }).where(eq(sms.id, smsRecord.id));
+
+                return { smsRecord, batch, success: true };
             }
 
+            return { smsRecord, batch: null, success: true };
+
         } catch (error: any) {
+            // Because of our early guard block, TypeScript knows smsRecord definitely exists here
             await db.update(sms).set({
                 parsedSuccessfully: false,
-                parseAttempts: smsRecord.parseAttempts + 1,
                 parseError: error.message
             }).where(eq(sms.id, smsRecord.id));
+
+            return { smsRecord, batch: null, success: false, error: error.message };
         }
     }
 
     public async getById(id: string) {
         const [record] = await db.select().from(sms).where(eq(sms.id, id));
-        return record;
+        return record || null;
     }
 
-    public async listSMS(filters: SMSFilters) {
-        let conditions = [];
+    public async listSMS(filters: {
+        beachId?: number;
+        batchId?: string;
+        parsedSuccessfully?: boolean;
+        startDate?: string;
+        endDate?: string;
+        limit?: number;
+        offset?: number;
+    }) {
+        const conditions: any[] = [];
         if (filters.beachId) conditions.push(eq(sms.beachId, filters.beachId));
         if (filters.batchId) conditions.push(eq(sms.batchId, filters.batchId));
         if (filters.parsedSuccessfully !== undefined) conditions.push(eq(sms.parsedSuccessfully, filters.parsedSuccessfully));
-        if (filters.processed !== undefined) conditions.push(eq(sms.processed, filters.processed));
         if (filters.startDate) conditions.push(gte(sms.receivedAt, new Date(filters.startDate)));
-        if (filters.endDate) conditions.push(lte(sms.receivedAt, new Date(filters.endDate)));
+        if (filters.endDate) conditions.push(gte(sms.receivedAt, new Date(filters.endDate)));
 
         const query = db.select().from(sms);
         if (conditions.length > 0) query.where(and(...conditions));
@@ -81,45 +107,6 @@ export class SMSService {
         if (filters.offset) query.offset(filters.offset);
 
         return await query;
-    }
-
-    public async getUnprocessed() {
-        return await db.select().from(sms).where(and(
-            eq(sms.parsedSuccessfully, true),
-            eq(sms.processed, false)
-        ));
-    }
-
-    public async markAsProcessed(id: string) {
-        await db.update(sms).set({ processed: true }).where(eq(sms.id, id));
-    }
-
-    public async reprocess(id: string) {
-        const record = await this.getById(id);
-        if (!record) throw new Error("SMS not found");
-        if (record.parsedSuccessfully && parseFloat(record.confidenceScore?.toString() || "1") > 0.8) {
-            throw new Error("SMS already parsed successfully with high confidence");
-        }
-        await this.parseAndStore(record);
-        return await this.getById(id);
-    }
-
-    public async getStats() {
-        const result = await db.execute(sql`
-            SELECT 
-                COUNT(*) as total_sms,
-                SUM(CASE WHEN parsed_successfully THEN 1 ELSE 0 END) as parsed_successfully,
-                AVG(confidence_score) as avg_confidence,
-                beach_id
-            FROM sms
-            GROUP BY beach_id
-        `);
-        return result;
-    }
-
-    public async deleteOlderThan(days: number) {
-        const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-        await db.delete(sms).where(lte(sms.createdAt, cutoff));
     }
 }
 

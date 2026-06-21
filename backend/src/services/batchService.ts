@@ -1,49 +1,69 @@
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { db } from "../db";
-import { batches, sms } from "../db/schema";
-import { BatchFilters, BatchAggregation, FishSpeciesAggregation } from "../types/batch";
+import { batches, sms, beaches } from "../db/schema";
 
 export class BatchService {
-    public async createBatch(beachId: number, timeWindowStart: string, timeWindowEnd: string, createdBy: string) {
+    public async createBatchFromSMS(data: {
+        quantityKg: number;
+        locationName: string;
+        harvesterPhone: string;
+        beachId?: number | null; // Keep as number | null to match integer("beach_id")
+    }) {
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+
+        if (data.beachId) {
+            // FIX: Query beaches using beaches.id (integer), not batches table!
+            const [beach] = await db.select().from(beaches).where(eq(beaches.id, data.beachId));
+            if (beach) {
+                latitude = beach.latitude ? parseFloat(beach.latitude) : null;
+                longitude = beach.longitude ? parseFloat(beach.longitude) : null;
+            }
+        }
+
+        const locationCoords: Record<string, { lat: number; lng: number }> = {
+            "dunga": { lat: -0.1481, lng: 34.7336 },
+            "usenge": { lat: -0.0631, lng: 34.0322 },
+            "kendu bay": { lat: -0.3667, lng: 34.6500 },
+            "homa bay": { lat: -0.5167, lng: 34.4500 },
+            "muhuru bay": { lat: -0.7000, lng: 34.0667 },
+        };
+
+        const normalizedLocation = data.locationName.toLowerCase().trim();
+        const coords = locationCoords[normalizedLocation];
+
         const [batch] = await db.insert(batches).values({
-            batchName: `Batch-${beachId}-${Date.now()}`,
-            batchDate: new Date().toISOString().split("T")[0],
-            beachId,
-            timeWindowStart: new Date(timeWindowStart),
-            timeWindowEnd: new Date(timeWindowEnd),
-            createdBy,
-            status: "collecting"
+            quantityKg: data.quantityKg,
+            locationName: data.locationName,
+            beachId: data.beachId || null,
+            latitude: latitude || coords?.lat || null,
+            longitude: longitude || coords?.lng || null,
+            harvesterPhone: data.harvesterPhone,
+            status: "available",
         }).returning();
+
         return batch;
     }
 
-    public async addSMSBatch(batchId: string, smsId: string) {
-        const batch = await this.getBatchById(batchId);
-        if (batch?.status !== "collecting") {
-            throw new Error("Batch is not collecting");
-        }
-        await db.update(sms).set({ batchId }).where(eq(sms.id, smsId));
-        await this.regenerateAggregation(batchId);
-    }
-
-    public async closeBatch(batchId: string) {
-        await db.update(batches).set({ status: "completed" }).where(eq(batches.id, batchId));
-        await this.regenerateAggregation(batchId);
-    }
-
+    // FIX: Changed parameter type from number to string to match uuid("id")
     public async getBatchById(id: string) {
         const [batch] = await db.select().from(batches).where(eq(batches.id, id));
-        if (!batch) return null;
-        const smsRecords = await db.select().from(sms).where(eq(sms.batchId, id));
-        return { ...batch, smsRecords };
+        return batch || null;
     }
 
-    public async listBatches(filters: BatchFilters) {
+    public async listBatches(filters: {
+        beachId?: number; // Keep as number to match integer("beach_id")
+        status?: "available" | "claimed" | "collected" | "flagged";
+        startDate?: string;
+        endDate?: string;
+        limit?: number;
+        offset?: number;
+    }) {
         let conditions = [];
         if (filters.beachId) conditions.push(eq(batches.beachId, filters.beachId));
         if (filters.status) conditions.push(eq(batches.status, filters.status));
-        if (filters.startDate) conditions.push(gte(batches.batchDate, filters.startDate));
-        if (filters.endDate) conditions.push(lte(batches.batchDate, filters.endDate));
+        if (filters.startDate) conditions.push(gte(batches.createdAt, new Date(filters.startDate)));
+        if (filters.endDate) conditions.push(lte(batches.createdAt, new Date(filters.endDate)));
 
         const query = db.select().from(batches);
         if (conditions.length > 0) {
@@ -55,110 +75,61 @@ export class BatchService {
         return await query;
     }
 
-    public async getBatchAggregation(id: string) {
-        const batch = await this.getBatchById(id);
-        return batch?.aggregatedData as BatchAggregation | null;
+    public async getAvailableBatches() {
+        return await db.select().from(batches).where(eq(batches.status, "available")).orderBy(batches.createdAt);
     }
 
-    public async regenerateAggregation(id: string) {
-        const batch = await this.getBatchById(id);
-        if (!batch) return;
+    // FIX: Changed batchId type from number to string to match uuid("id")
+    public async claimBatch(batchId: string, buyerId: string) {
+        const batch = await this.getBatchById(batchId);
+        if (!batch) throw new Error("Batch not found");
+        if (batch.status !== "available") throw new Error("Batch is not available");
 
-        let totalCatch = 0;
-        let totalPrice = 0;
-        let messageCountWithPrice = 0;
-        let totalBoats = 0;
-        const speciesMap = new Map<string, { total_kg: number, prices: number[], count: number }>();
+        const [updated] = await db.update(batches).set({
+            status: "claimed",
+            buyerId,
+            claimedAt: new Date(),
+        }).where(eq(batches.id, batchId)).returning();
 
-        for (const record of batch.smsRecords) {
-            if (record.parsedData && record.parsedSuccessfully) {
-                const data = record.parsedData as any;
-                if (data.catch_total_kg) totalCatch += data.catch_total_kg;
-                if (data.price_per_kg_ksh) {
-                    totalPrice += data.price_per_kg_ksh;
-                    messageCountWithPrice++;
-                }
-                if (data.boat_count) totalBoats += data.boat_count;
+        return updated;
+    }
 
-                if (data.fish_species && Array.isArray(data.fish_species)) {
-                    for (const species of data.fish_species) {
-                        const existing = speciesMap.get(species) || { total_kg: 0, prices: [], count: 0 };
-                        if (data.catch_total_kg) existing.total_kg += data.catch_total_kg;
-                        if (data.price_per_kg_ksh) existing.prices.push(data.price_per_kg_ksh);
-                        existing.count++;
-                        speciesMap.set(species, existing);
-                    }
-                }
-            }
-        }
+    // FIX: Changed batchId type from number to string to match uuid("id")
+    public async collectBatch(batchId: string, qualityRating?: number, notes?: string) {
+        const batch = await this.getBatchById(batchId);
+        if (!batch) throw new Error("Batch not found");
+        if (batch.status !== "claimed") throw new Error("Batch must be claimed before collection");
 
-        const speciesBreakdown: FishSpeciesAggregation[] = Array.from(speciesMap.entries()).map(([species, data]) => ({
-            species,
-            total_kg: data.total_kg,
-            avg_price: data.prices.length > 0 ? data.prices.reduce((a, b) => a + b, 0) / data.prices.length : 0
-        }));
+        const [updated] = await db.update(batches).set({
+            status: "collected",
+            collectedAt: new Date(),
+            qualityRating: qualityRating || null,
+            notes: notes || null,
+        }).where(eq(batches.id, batchId)).returning();
 
-        const aggregation: BatchAggregation = {
-            total_catch_kg: totalCatch,
-            average_price_ksh: messageCountWithPrice > 0 ? totalPrice / messageCountWithPrice : 0,
-            fish_species_breakdown: speciesBreakdown,
-            beach_name: batch.smsRecords[0]?.parsedData?.beach_name || "Unknown",
-            total_boats: totalBoats,
-            weather_summary: batch.smsRecords[0]?.parsedData?.weather_condition || "Unknown",
-            message_count: batch.smsRecords.length
+        return updated;
+    }
+
+    public async getImpactStats() {
+        const [result] = await db
+            .select({
+                totalKg: sql<string>`coalesce(sum(${batches.quantityKg}), 0)`
+            })
+            .from(batches)
+            .where(eq(batches.status, "collected"));
+
+        const totalKg = parseFloat(result?.totalKg || "0");
+        const totalTonnes = totalKg / 1000;
+
+        return {
+            totalTonnes: Math.round(totalTonnes * 100) / 100,
+            totalKg: Math.round(totalKg),
+            lakeAreaClearedM2: Math.round(totalTonnes * 10),
+            co2eAvoidedTonnes: Math.round(totalTonnes * 0.5 * 100) / 100,
         };
-
-        const smsCount = batch.smsRecords.length;
-        const processedCount = batch.smsRecords.filter(r => r.parsedSuccessfully).length;
-        const failedCount = smsCount - processedCount;
-
-        await db.update(batches).set({ 
-            aggregatedData: aggregation,
-            smsCount,
-            processedCount,
-            failedCount
-        }).where(eq(batches.id, id));
     }
 
-    public async autoBatchSMS() {
-        const unbatchedSMS = await db.select().from(sms).where(sql`batch_id IS NULL AND parsed_successfully = true`);
-        const groupedByBeachAndDate = new Map<string, any[]>();
-
-        for (const record of unbatchedSMS) {
-            if (!record.beachId) continue;
-            const date = new Date(record.receivedAt).toISOString().split("T")[0];
-            const key = `${record.beachId}-${date}`;
-            if (!groupedByBeachAndDate.has(key)) groupedByBeachAndDate.set(key, []);
-            groupedByBeachAndDate.get(key)!.push(record);
-        }
-
-        for (const [key, records] of groupedByBeachAndDate.entries()) {
-            if (records.length >= 5) {
-                const [beachIdStr, dateStr] = key.split("-");
-                const beachId = parseInt(beachIdStr);
-                const batch = await this.getDailyBatch(beachId, dateStr);
-                for (const record of records) {
-                    await this.addSMSBatch(batch.id, record.id);
-                }
-            }
-        }
-    }
-
-    public async getDailyBatch(beachId: number, date: string) {
-        const [existingBatch] = await db.select().from(batches).where(and(
-            eq(batches.beachId, beachId),
-            eq(batches.batchDate, date)
-        ));
-        
-        if (existingBatch) return existingBatch;
-
-        const start = new Date(date);
-        const end = new Date(date);
-        end.setDate(end.getDate() + 1);
-
-        return await this.createBatch(beachId, start.toISOString(), end.toISOString(), "system_auto");
-    }
-
+    // FIX: Changed id type from number to string to match uuid("id")
     public async deleteBatch(id: string) {
         await db.update(sms).set({ batchId: null }).where(eq(sms.batchId, id));
         await db.delete(batches).where(eq(batches.id, id));

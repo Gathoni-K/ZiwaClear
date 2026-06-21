@@ -1,4 +1,5 @@
-import { pgTable, serial, text, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, decimal, pgPolicy } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const beaches = pgTable("beaches", {
     id: serial("id").primaryKey(),
@@ -7,9 +8,11 @@ export const beaches = pgTable("beaches", {
     lake: text("lake").notNull(),
     latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
     longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
-    description: text("description"),
     isActive: boolean("is_active").default(true).notNull(),
-    landmark: text("landmark"),
-    landingSiteType: text("landing_site_type"),
-    facilities: text("facilities").array(),
-});
+}, (table) => [
+    pgPolicy("Allow public read access to beaches", {
+        for: "select",
+        to: "anon",
+        using: sql`true`,
+    }),
+]);
