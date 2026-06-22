@@ -6,14 +6,14 @@ export function AIChatWidget() {
   const { isOpen, toggle, close } = useChatWidget();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[1100] flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-6 z-[1100] flex flex-col items-end gap-3 pointer-events-none">
       {/* Slide-up panel */}
       <div
         className={`w-[340px] h-[460px] rounded-tile bg-tile border border-border-ui shadow-2xl overflow-hidden
                     origin-bottom-right transition-all duration-200
                     ${
                       isOpen
-                        ? "opacity-100 scale-100 translate-y-0"
+                        ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
                         : "opacity-0 scale-95 translate-y-4 pointer-events-none"
                     }`}
       >
@@ -33,12 +33,12 @@ export function AIChatWidget() {
         </div>
       </div>
 
-      {/* Trigger button */}
+      {/* Trigger button — always clickable even though the wrapper above it is not */}
       <button
         type="button"
         onClick={toggle}
         aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
-        className="flex items-center gap-2 bg-primary text-background font-semibold text-sm px-4 py-3
+        className="pointer-events-auto flex items-center gap-2 bg-primary text-background font-semibold text-sm px-4 py-3
                    rounded-pill shadow-lg hover:bg-primary-hover transition-colors"
       >
         {isOpen ? <X size={18} /> : <Bot size={18} />}
