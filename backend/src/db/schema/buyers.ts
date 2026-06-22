@@ -1,15 +1,15 @@
+import { pgTable, uuid, text, timestamp, pgPolicy } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { pgTable, serial, text, timestamp, pgPolicy } from "drizzle-orm/pg-core";
 
 export const buyers = pgTable("buyers", {
-    id: serial("id").primaryKey(),
+    id: uuid("id").primaryKey().defaultRandom(),
     companyName: text("company_name").notNull(),
     contactEmail: text("contact_email").notNull().unique(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-    pgPolicy("Lock down buyers layer", {
+    pgPolicy("Lock down buyer information", {
         for: "all",
         to: "anon",
         using: sql`false`,
-    })
+    }),
 ]);
