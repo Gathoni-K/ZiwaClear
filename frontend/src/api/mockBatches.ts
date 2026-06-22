@@ -11,6 +11,10 @@ function minutesAgo(mins: number): string {
   return new Date(Date.now() - mins * 60_000).toISOString();
 }
 
+function hoursFromNow(hours: number): string {
+  return new Date(Date.now() + hours * 60 * 60_000).toISOString();
+}
+
 export const MOCK_BATCHES: Batch[] = [
   {
     id: "batch-001",
@@ -54,22 +58,30 @@ export const MOCK_BATCHES: Batch[] = [
   },
   {
     id: "batch-005",
-    weightKg: 650,
-    locationName: "Dunga Beach",
-    latitude: -0.1192,
-    longitude: 34.7383,
-    verificationRating: 4.7,
+    weightKg: 1240,
+    locationName: "Kisumu Lakefront Sector B",
+    latitude: -0.0917,
+    longitude: 34.768,
+    verificationRating: 4.8,
     status: "claimed",
     collectedAt: minutesAgo(180),
+    batchCode: "ZM-992-K5M",
+    materialType: "Verified PET-G",
+    region: "Kisumu, Kenya",
+    expiresAt: hoursFromNow(48),
   },
   {
     id: "batch-006",
-    weightKg: 900,
-    locationName: "Kendu Bay",
-    latitude: -0.3667,
-    longitude: 34.6333,
+    weightKg: 850,
+    locationName: "Homa Bay Shoreline A",
+    latitude: -0.5273,
+    longitude: 34.4571,
     verificationRating: 4.5,
     status: "claimed",
     collectedAt: minutesAgo(240),
+    batchCode: "ZM-441-HBY",
+    materialType: "HDPE Mixed",
+    region: "Homa Bay, Kenya",
+    expiresAt: hoursFromNow(72),
   },
 ];
