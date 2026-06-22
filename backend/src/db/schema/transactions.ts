@@ -1,21 +1,20 @@
+import { pgTable, uuid, text, real, timestamp, pgPolicy } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { pgTable, serial, text, integer, decimal, timestamp, pgPolicy } from "drizzle-orm/pg-core";
-import { biomassBatches } from "./biomassBatches";
+import { batches } from "./batches";
 import { buyers } from "./buyers";
 
-
 export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
-  batchId: integer("batch_id").references(() => biomassBatches.id).notNull(),
-  buyerId: integer("buyer_id").references(() => buyers.id).notNull(),
-  payoutAmount: decimal("payout_amount").notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
+  batchId: uuid("batch_id").references(() => batches.id).notNull(),
+  buyerId: uuid("buyer_id").references(() => buyers.id).notNull(),
+  payoutAmount: real("payout_amount").notNull(),
   mpesaReceiptNumber: text("mpesa_receipt_number"),
   status: text("status").default("pending").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   pgPolicy("Lock down transaction financials", {
     for: "all",
     to: "anon",
     using: sql`false`,
-  })
+  }),
 ]);

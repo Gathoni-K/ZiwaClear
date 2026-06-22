@@ -1,0 +1,113 @@
+import { eq, and, gte, sql } from "drizzle-orm";
+import { db } from "../db";
+import { sms, beaches } from "../db/schema";
+import { smsParser } from "./sms/smsParser";
+import { batchService } from "./batchService";
+
+export class SMSService {
+    public async processIncomingSMS(rawMessage: string, senderPhone: string) {
+        const recentDuplicate = await db.select().from(sms).where(and(
+            eq(sms.senderPhone, senderPhone),
+            eq(sms.rawMessage, rawMessage),
+            gte(sms.receivedAt, new Date(Date.now() - 60000))
+        ));
+
+        if (recentDuplicate.length > 0) {
+            throw new Error("Duplicate message detected");
+        }
+
+        const [smsRecord] = await db.insert(sms).values({
+            rawMessage,
+            senderPhone,
+        }).returning();
+
+
+        if (!smsRecord) {
+            throw new Error("Failed to create SMS database record.");
+        }
+
+        try {
+            const parsedData = await smsParser.parseSMS(rawMessage);
+
+
+            const locationName: string | null = (parsedData as any).location || (parsedData as any).beach_name || null;
+
+            let beachId: number | null = null;
+            if (locationName) {
+                const [beach] = await db.select().from(beaches).where(
+                    sql`lower(${beaches.name}) = lower(${locationName})`
+                );
+                if (beach) beachId = beach.id;
+            }
+
+            await db.update(sms).set({
+                parsedData: parsedData as any,
+                parsedSuccessfully: true,
+                beachId,
+                parseError: null
+            }).where(eq(sms.id, smsRecord.id));
+
+            const quantityKg: number | null = (parsedData as any).quantity_kg || null;
+
+            if (quantityKg && locationName) {
+                const batch = await batchService.createBatchFromSMS({
+                    quantityKg,
+                    locationName,
+                    harvesterPhone: senderPhone,
+                    beachId
+                });
+
+                // Guard Check: Protects TypeScript from evaluating batch as possibly 'undefined'
+                if (!batch) {
+                    throw new Error("Failed to create batch associated with the processed SMS record.");
+                }
+
+                await db.update(sms).set({ batchId: batch.id }).where(eq(sms.id, smsRecord.id));
+
+                return { smsRecord, batch, success: true };
+            }
+
+            return { smsRecord, batch: null, success: true };
+
+        } catch (error: any) {
+            // Because of our early guard block, TypeScript knows smsRecord definitely exists here
+            await db.update(sms).set({
+                parsedSuccessfully: false,
+                parseError: error.message
+            }).where(eq(sms.id, smsRecord.id));
+
+            return { smsRecord, batch: null, success: false, error: error.message };
+        }
+    }
+
+    public async getById(id: string) {
+        const [record] = await db.select().from(sms).where(eq(sms.id, id));
+        return record || null;
+    }
+
+    public async listSMS(filters: {
+        beachId?: number;
+        batchId?: string;
+        parsedSuccessfully?: boolean;
+        startDate?: string;
+        endDate?: string;
+        limit?: number;
+        offset?: number;
+    }) {
+        const conditions: any[] = [];
+        if (filters.beachId) conditions.push(eq(sms.beachId, filters.beachId));
+        if (filters.batchId) conditions.push(eq(sms.batchId, filters.batchId));
+        if (filters.parsedSuccessfully !== undefined) conditions.push(eq(sms.parsedSuccessfully, filters.parsedSuccessfully));
+        if (filters.startDate) conditions.push(gte(sms.receivedAt, new Date(filters.startDate)));
+        if (filters.endDate) conditions.push(gte(sms.receivedAt, new Date(filters.endDate)));
+
+        const query = db.select().from(sms);
+        if (conditions.length > 0) query.where(and(...conditions));
+        if (filters.limit) query.limit(filters.limit);
+        if (filters.offset) query.offset(filters.offset);
+
+        return await query;
+    }
+}
+
+export const smsService = new SMSService();

@@ -45,3 +45,13 @@
 -Currently, a callback function is being passed, but in Drizzle, these functions are used for transactions.
 
 **FIX:** Import the sql helper from Drizzle and pass inthe raw query directly into the '.execute()'
+
+
+4.
+'Could not find declaration module for africastalking'
+
+**Fix:**
+
+Add the africastalking.d.ts file in the types folder and paste the code below:
+
+    declare module "africastalking";

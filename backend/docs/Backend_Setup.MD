@@ -193,3 +193,17 @@
 -Run the seed script using:
 
     npm run db:seed
+
+## 4.Setting Up Africa's Talking API.
+
+-Install using:
+
+    npm install africastalking
+
+-Environment variables needed:
+
+
+
+-Ngrok is also needed, install globally, follow instuctions in the official docs. We installed using Microsoft store.
+
+-On installation, add the authToken to the project.

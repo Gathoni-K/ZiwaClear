@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { harvesters, biomassBatches } from "./schema";
+import { harvesters, batches } from "./schema";
 import { eq } from "drizzle-orm";
 
 async function main() {
@@ -10,44 +10,59 @@ async function main() {
     }).onConflictDoUpdate({
         target: harvesters.phoneNumber,
         set: { name: "John Omondi", location: "Dunga Beach" }
-    }).returning({ id: harvesters.id });
+    }).returning();
 
     if (!mockHarvester) {
         throw new Error("Failed to create mock harvester for seeding.");
     }
 
-    await db.delete(biomassBatches).where(eq(biomassBatches.harvesterId, mockHarvester.id));
+    await db.delete(batches).where(eq(batches.harvesterPhone, mockHarvester.phoneNumber));
 
-    await db.insert(biomassBatches).values([
+    await db.insert(batches).values([
         {
-            harvesterId: mockHarvester.id,
-            weightKg: "45.5",
-            locationCoordinates: "-0.1432,34.7391",
+            quantityKg: 45.5,
+            locationName: "Dunga",
+            latitude: -0.1432,
+            longitude: 34.7391,
+            harvesterPhone: mockHarvester.phoneNumber,
+            harvesterName: mockHarvester.name,
             status: "available",
         },
         {
-            harvesterId: mockHarvester.id,
-            weightKg: "120.0",
-            locationCoordinates: "-0.1032,34.7521",
+            quantityKg: 120.0,
+            locationName: "Dunga",
+            latitude: -0.1032,
+            longitude: 34.7521,
+            harvesterPhone: mockHarvester.phoneNumber,
+            harvesterName: mockHarvester.name,
             status: "available",
         },
         {
-            harvesterId: mockHarvester.id,
-            weightKg: "75.2",
-            locationCoordinates: "-0.1194,34.7314",
+            quantityKg: 75.2,
+            locationName: "Dunga",
+            latitude: -0.1194,
+            longitude: 34.7314,
+            harvesterPhone: mockHarvester.phoneNumber,
+            harvesterName: mockHarvester.name,
             status: "claimed",
         },
         {
-            harvesterId: mockHarvester.id,
-            weightKg: "90.3",
-            locationCoordinates: "-0.0512,34.6012",
+            quantityKg: 90.3,
+            locationName: "Usenge",
+            latitude: -0.0512,
+            longitude: 34.6012,
+            harvesterPhone: mockHarvester.phoneNumber,
+            harvesterName: mockHarvester.name,
             status: "available",
         },
         {
-            harvesterId: mockHarvester.id,
-            weightKg: "60.0",
-            locationCoordinates: "-0.2831,34.3412",
-            status: "paid",
+            quantityKg: 60.0,
+            locationName: "Kendu Bay",
+            latitude: -0.2831,
+            longitude: 34.3412,
+            harvesterPhone: mockHarvester.phoneNumber,
+            harvesterName: mockHarvester.name,
+            status: "collected",
         },
     ]);
 
