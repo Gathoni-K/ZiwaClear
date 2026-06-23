@@ -10,7 +10,8 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:push": "drizzle-kit push",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
