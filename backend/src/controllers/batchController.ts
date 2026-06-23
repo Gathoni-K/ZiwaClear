@@ -36,10 +36,7 @@ export class BatchController {
                 return res.status(400).json({ success: false, message: "Invalid ID" });
             }
 
-            const batchId = parseInt(id, 10);
-            if (isNaN(batchId)) {
-                return res.status(400).json({ success: false, message: "ID must be a valid number" })
-            }
+            // REMOVED: parseInt check since IDs are UUID strings
             const batch = await batchService.getBatchById(id);
 
             if (!batch) return res.status(404).json({ success: false, message: "Batch not found" });
@@ -116,7 +113,7 @@ export class BatchController {
                 data: {
                     price_kes_per_kg: 9,
                     currency: "KES",
-                    updated_at: "2026-06-22T00:00:00Z",
+                    updated_at: new Date().toISOString(),
                     note: "Average market rate based on recent transactions"
                 }
             });
@@ -131,7 +128,6 @@ export class BatchController {
             if (!id || typeof id !== "string") {
                 return res.status(400).json({ success: false, message: "Invalid ID" });
             }
-
 
             await batchService.deleteBatch(id);
             return res.json({ success: true, message: "Batch deleted successfully" });

@@ -1,5 +1,5 @@
 {
-  "id": "7c255fdb-9ae9-4e34-90d6-47fc84ab4067",
+  "id": "491c4453-3764-4ba3-9ab0-a1a56a2c20c2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -10,9 +10,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "phone_number": {
           "name": "phone_number",
@@ -34,7 +35,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -52,7 +53,17 @@
           ]
         }
       },
-      "policies": {},
+      "policies": {
+        "Lock down harvester information": {
+          "name": "Lock down harvester information",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "anon"
+          ],
+          "using": "false"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
@@ -62,9 +73,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "company_name": {
           "name": "company_name",
@@ -80,7 +92,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -98,35 +110,58 @@
           ]
         }
       },
-      "policies": {},
+      "policies": {
+        "Lock down buyer information": {
+          "name": "Lock down buyer information",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "anon"
+          ],
+          "using": "false"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.biomass_batches": {
-      "name": "biomass_batches",
+    "public.batches": {
+      "name": "batches",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "quantity_kg": {
+          "name": "quantity_kg",
+          "type": "real",
+          "primaryKey": false,
           "notNull": true
         },
-        "harvester_id": {
-          "name": "harvester_id",
+        "location_name": {
+          "name": "location_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beach_id": {
+          "name": "beach_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "weight_kg": {
-          "name": "weight_kg",
-          "type": "numeric",
+        "latitude": {
+          "name": "latitude",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "location_coordinates": {
-          "name": "location_coordinates",
-          "type": "text",
+        "longitude": {
+          "name": "longitude",
+          "type": "real",
           "primaryKey": false,
           "notNull": false
         },
@@ -137,9 +172,58 @@
           "notNull": true,
           "default": "'available'"
         },
+        "harvester_phone": {
+          "name": "harvester_phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harvester_name": {
+          "name": "harvester_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "buyer_id": {
+          "name": "buyer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quality_rating": {
+          "name": "quality_rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "collected_at": {
+          "name": "collected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -147,12 +231,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "biomass_batches_harvester_id_harvesters_id_fk": {
-          "name": "biomass_batches_harvester_id_harvesters_id_fk",
-          "tableFrom": "biomass_batches",
-          "tableTo": "harvesters",
+        "batches_beach_id_beaches_id_fk": {
+          "name": "batches_beach_id_beaches_id_fk",
+          "tableFrom": "batches",
+          "tableTo": "beaches",
           "columnsFrom": [
-            "harvester_id"
+            "beach_id"
           ],
           "columnsTo": [
             "id"
@@ -163,7 +247,35 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "Allow public read access to available batches": {
+          "name": "Allow public read access to available batches",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "true"
+        },
+        "Allow authenticated insert": {
+          "name": "Allow authenticated insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "true"
+        },
+        "Allow authenticated update": {
+          "name": "Allow authenticated update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "true"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
@@ -173,25 +285,26 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "batch_id": {
           "name": "batch_id",
-          "type": "integer",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
         "buyer_id": {
           "name": "buyer_id",
-          "type": "integer",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
         "payout_amount": {
           "name": "payout_amount",
-          "type": "numeric",
+          "type": "real",
           "primaryKey": false,
           "notNull": true
         },
@@ -210,7 +323,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -218,10 +331,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "transactions_batch_id_biomass_batches_id_fk": {
-          "name": "transactions_batch_id_biomass_batches_id_fk",
+        "transactions_batch_id_batches_id_fk": {
+          "name": "transactions_batch_id_batches_id_fk",
           "tableFrom": "transactions",
-          "tableTo": "biomass_batches",
+          "tableTo": "batches",
           "columnsFrom": [
             "batch_id"
           ],
@@ -247,12 +360,22 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "Lock down transaction financials": {
+          "name": "Lock down transaction financials",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "anon"
+          ],
+          "using": "false"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.sms_logs": {
-      "name": "sms_logs",
+    "public.beaches": {
+      "name": "beaches",
       "schema": "",
       "columns": {
         "id": {
@@ -261,17 +384,97 @@
           "primaryKey": true,
           "notNull": true
         },
-        "sender_phone": {
-          "name": "sender_phone",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "county": {
+          "name": "county",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lake": {
+          "name": "lake",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "Allow public read access to beaches": {
+          "name": "Allow public read access to beaches",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sms": {
+      "name": "sms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "raw_message": {
           "name": "raw_message",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "sender_phone": {
+          "name": "sender_phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "parsed_data": {
+          "name": "parsed_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
         },
         "parsed_successfully": {
           "name": "parsed_successfully",
@@ -280,19 +483,83 @@
           "notNull": true,
           "default": false
         },
+        "parse_error": {
+          "name": "parse_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "beach_id": {
+          "name": "beach_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "sms_batch_id_batches_id_fk": {
+          "name": "sms_batch_id_batches_id_fk",
+          "tableFrom": "sms",
+          "tableTo": "batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "sms_beach_id_beaches_id_fk": {
+          "name": "sms_beach_id_beaches_id_fk",
+          "tableFrom": "sms",
+          "tableTo": "beaches",
+          "columnsFrom": [
+            "beach_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "Allow public read access to SMS": {
+          "name": "Allow public read access to SMS",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "true"
+        },
+        "Allow authenticated insert": {
+          "name": "Allow authenticated insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "true"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     }
