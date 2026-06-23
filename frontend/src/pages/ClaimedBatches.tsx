@@ -4,10 +4,55 @@ import { RouteSuggestionPanel } from "../components/RouteSuggestionPanel";
 import { PaymentSummaryPanel } from "../components/PaymentSummaryPanel";
 import { AppSideNav } from "../components/AppSideNav";
 import { MOCK_ROUTE, MOCK_PAYMENT_SUMMARY } from "../api/mockLogistics";
+import { API_BASE_URL } from "../api/config";
 
 function ClaimedBatches() {
-  const { data: batches, isLoading } = useBatches();
-  const claimed = batches?.filter((b) => b.status === "claimed");
+  const { data: batches, isLoading, refetch } = useBatches() as any;
+  const claimed = batches?.filter((b: any) => b.status === "claimed");
+
+  async function handleConfirmCollection(batch: { id: string }) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/batches/${batch.id}/collect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to confirm collection");
+      }
+
+      if (refetch) {
+        refetch();
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      alert("Could not confirm collection. Please try again.");
+    }
+  }
+
+  async function handleCompleteTransaction() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/batches/transaction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to complete transaction");
+      }
+
+      alert("Transaction completed successfully!");
+
+      if (refetch) {
+        refetch();
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      alert("Could not complete the transaction. Please try again.");
+    }
+  }
 
   return (
     <div className="flex h-full">
@@ -29,13 +74,11 @@ function ClaimedBatches() {
               </p>
             )}
 
-            {claimed?.map((batch) => (
+            {claimed?.map((batch: any) => (
               <ClaimedBatchCard
                 key={batch.id}
                 batch={batch}
-                onConfirmCollection={(b) =>
-                  console.log("Confirm collection:", b.id)
-                }
+                onConfirmCollection={handleConfirmCollection}
               />
             ))}
           </div>
@@ -44,9 +87,7 @@ function ClaimedBatches() {
             <RouteSuggestionPanel route={MOCK_ROUTE} />
             <PaymentSummaryPanel
               summary={MOCK_PAYMENT_SUMMARY}
-              onCompleteTransaction={() =>
-                console.log("Complete transaction clicked")
-              }
+              onCompleteTransaction={handleCompleteTransaction}
             />
           </div>
         </div>

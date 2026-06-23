@@ -11,11 +11,10 @@ export function AIChatWidget() {
       <div
         className={`w-[340px] h-[460px] rounded-tile bg-tile border border-border-ui shadow-2xl overflow-hidden
                     origin-bottom-right transition-all duration-200
-                    ${
-                      isOpen
-                        ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                        : "opacity-0 scale-95 translate-y-4 pointer-events-none"
-                    }`}
+                    ${isOpen
+            ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 scale-95 translate-y-4 pointer-events-none"
+          }`}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-ui">
           <span className="font-bold text-sm">ZiwaClear AI Assistant</span>

@@ -4,21 +4,31 @@ import { Sidebar } from "../components/Sidebar";
 import { DashboardMap } from "../components/DashboardMap";
 import { BatchDetailPanel } from "../components/BatchDetailPanel";
 import { useBatches } from "../hooks/useBatches";
+import { API_BASE_URL } from "../api/config";
 
 function Dashboard() {
   const navigate = useNavigate();
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
-  const { data: batches } = useBatches(); // shares the same cached request
+  const { data: batches } = useBatches();
 
   const selectedBatch = batches?.find((b) => b.id === selectedBatchId) ?? null;
 
-  function handleReserve(batch: { id: string }) {
-    // TODO: once a real backend exists, call the reserve/claim endpoint here
-    // before navigating, and show an error toast if it fails.
-    console.log("Reserve clicked:", batch.id);
-     console.log("BEFORE navigate, pathname:", window.location.pathname);
-  navigate("/claimed-batches");
-  console.log("AFTER navigate call, pathname:", window.location.pathname);
+  async function handleReserve(batch: { id: string }) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/batches/${batch.id}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buyerId: "00000000-0000-0000-0000-000000000001" })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reserve batch");
+      }
+
+      navigate("/claimed-batches");
+    } catch (error) {
+      alert("Could not reserve the batch. Please try again.");
+    }
   }
 
   return (
@@ -46,3 +56,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
