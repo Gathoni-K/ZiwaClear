@@ -3,5 +3,4 @@ export * from "./buyers";
 export * from "./batches";
 export * from "./transactions";
 export * from "./beaches";
-export * from "./batches";
 export * from "./sms";
