@@ -7,13 +7,12 @@ export class BatchService {
         quantityKg: number;
         locationName: string;
         harvesterPhone: string;
-        beachId?: number | null; // Keep as number | null to match integer("beach_id")
+        beachId?: number | null;
     }) {
         let latitude: number | null = null;
         let longitude: number | null = null;
 
         if (data.beachId) {
-            // FIX: Query beaches using beaches.id (integer), not batches table!
             const [beach] = await db.select().from(beaches).where(eq(beaches.id, data.beachId));
             if (beach) {
                 latitude = beach.latitude ? parseFloat(beach.latitude) : null;
@@ -45,14 +44,13 @@ export class BatchService {
         return batch;
     }
 
-    // FIX: Changed parameter type from number to string to match uuid("id")
     public async getBatchById(id: string) {
         const [batch] = await db.select().from(batches).where(eq(batches.id, id));
         return batch || null;
     }
 
     public async listBatches(filters: {
-        beachId?: number; // Keep as number to match integer("beach_id")
+        beachId?: number;
         status?: "available" | "claimed" | "collected" | "flagged";
         startDate?: string;
         endDate?: string;
@@ -65,12 +63,12 @@ export class BatchService {
         if (filters.startDate) conditions.push(gte(batches.createdAt, new Date(filters.startDate)));
         if (filters.endDate) conditions.push(lte(batches.createdAt, new Date(filters.endDate)));
 
-        const query = db.select().from(batches);
+        let query = db.select().from(batches).$dynamic();
         if (conditions.length > 0) {
-            query.where(and(...conditions));
+            query = query.where(and(...conditions));
         }
-        if (filters.limit) query.limit(filters.limit);
-        if (filters.offset) query.offset(filters.offset);
+        if (filters.limit) query = query.limit(filters.limit);
+        if (filters.offset) query = query.offset(filters.offset);
 
         return await query;
     }
@@ -79,7 +77,6 @@ export class BatchService {
         return await db.select().from(batches).where(eq(batches.status, "available")).orderBy(batches.createdAt);
     }
 
-    // FIX: Changed batchId type from number to string to match uuid("id")
     public async claimBatch(batchId: string, buyerId: string) {
         const batch = await this.getBatchById(batchId);
         if (!batch) throw new Error("Batch not found");
@@ -94,7 +91,6 @@ export class BatchService {
         return updated;
     }
 
-    // FIX: Changed batchId type from number to string to match uuid("id")
     public async collectBatch(batchId: string, qualityRating?: number, notes?: string) {
         const batch = await this.getBatchById(batchId);
         if (!batch) throw new Error("Batch not found");
@@ -129,7 +125,6 @@ export class BatchService {
         };
     }
 
-    // FIX: Changed id type from number to string to match uuid("id")
     public async deleteBatch(id: string) {
         await db.update(sms).set({ batchId: null }).where(eq(sms.batchId, id));
         await db.delete(batches).where(eq(batches.id, id));

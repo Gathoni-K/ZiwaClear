@@ -21,14 +21,12 @@ export class SMSService {
             senderPhone,
         }).returning();
 
-
         if (!smsRecord) {
             throw new Error("Failed to create SMS database record.");
         }
 
         try {
             const parsedData = await smsParser.parseSMS(rawMessage);
-
 
             const locationName: string | null = (parsedData as any).location || (parsedData as any).beach_name || null;
 
@@ -57,7 +55,6 @@ export class SMSService {
                     beachId
                 });
 
-                // Guard Check: Protects TypeScript from evaluating batch as possibly 'undefined'
                 if (!batch) {
                     throw new Error("Failed to create batch associated with the processed SMS record.");
                 }
@@ -70,7 +67,6 @@ export class SMSService {
             return { smsRecord, batch: null, success: true };
 
         } catch (error: any) {
-            // Because of our early guard block, TypeScript knows smsRecord definitely exists here
             await db.update(sms).set({
                 parsedSuccessfully: false,
                 parseError: error.message
@@ -101,10 +97,10 @@ export class SMSService {
         if (filters.startDate) conditions.push(gte(sms.receivedAt, new Date(filters.startDate)));
         if (filters.endDate) conditions.push(gte(sms.receivedAt, new Date(filters.endDate)));
 
-        const query = db.select().from(sms);
-        if (conditions.length > 0) query.where(and(...conditions));
-        if (filters.limit) query.limit(filters.limit);
-        if (filters.offset) query.offset(filters.offset);
+        let query = db.select().from(sms).$dynamic();
+        if (conditions.length > 0) query = query.where(and(...conditions));
+        if (filters.limit) query = query.limit(filters.limit);
+        if (filters.offset) query = query.offset(filters.offset);
 
         return await query;
     }
