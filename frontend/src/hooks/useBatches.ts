@@ -9,8 +9,8 @@ export function useBatches() {
       const raw = await fetchBatches();
       return raw.map((b: any) => ({
         ...b,
-        weightKg: b.quantityKg,
-        verificationRating: b.qualityRating ?? 0,
+        weightKg: b.weightKg ?? b.quantityKg,
+        verificationRating: b.verificationRating ?? b.qualityRating ?? 0,
         collectedAt: b.collectedAt ?? b.createdAt,
       }));
     },
