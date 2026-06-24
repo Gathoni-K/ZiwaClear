@@ -1,5 +1,3 @@
-// src/services/sms/smsParser.ts
-
 import { ChatOpenAI } from "@langchain/openai";
 import { extractionPromptTemplate } from "./parserPrompts";
 import { ParsedSMSData, smsParserSchema } from "./parserSchema";
@@ -31,8 +29,8 @@ export class LangchainSMSParser {
         try {
             return await circuitBreaker.execute(async () => {
                 const structuredLlm = this.llm.withStructuredOutput(smsParserSchema);
-                const prompt = await extractionPromptTemplate.format({ message });
-                const result = await structuredLlm.invoke(prompt);
+                const chain = extractionPromptTemplate.pipe(structuredLlm);
+                const result = await chain.invoke({ message });
 
                 const finalResult = {
                     ...result,
