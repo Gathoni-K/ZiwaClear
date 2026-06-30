@@ -3,10 +3,10 @@ import { LayoutGrid, Package, Receipt, Leaf, Bot, ShieldCheck } from "lucide-rea
 import { useChatWidget } from "../context/ChatWidgetContext";
 
 const navItems = [
-  { label: "Dashboard", to: "/", icon: LayoutGrid },
-  { label: "Claimed Batches", to: "/claimed-batches", icon: Package },
-  { label: "Transactions", to: "/transactions", icon: Receipt },
-  { label: "Impact", to: "/impact", icon: Leaf },
+  { label: "Dashboard", to: "/dashboard", icon: LayoutGrid },
+  { label: "Claimed Batches", to: "/dashboard/claimed-batches", icon: Package },
+  { label: "Transactions", to: "/dashboard/transactions", icon: Receipt },
+  { label: "Impact", to: "/dashboard/impact", icon: Leaf },
 ];
 
 export function AppSideNav() {
@@ -29,7 +29,7 @@ export function AppSideNav() {
           <NavLink
             key={to}
             to={to}
-            end={to === "/"}
+            end={to === "/dashboard"}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-input text-sm font-medium transition-colors ${
                 isActive

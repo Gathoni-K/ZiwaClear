@@ -14,15 +14,13 @@ export function Sidebar({ selectedBatchId, onSelectBatch }: SidebarProps) {
 
   function handleReserve(batch: { id: string }) {
     // TODO: once a real backend exists, call the reserve/claim endpoint here
+    // before navigating, and show an error toast if it fails.
     console.log("Reserve clicked:", batch.id);
-    navigate("/claimed-batches");
+    navigate("/dashboard/claimed-batches");
   }
 
   return (
-    <aside
-      className="w-[340px] h-full overflow-y-auto bg-tile border-r border-border-ui p-5 flex flex-col gap-4"
-      data-selected-batch-id={selectedBatchId ?? undefined}
-    >
+    <aside className="w-[340px] h-full overflow-y-auto bg-tile border-r border-border-ui p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Available Biomass</h2>
         <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full">
@@ -62,9 +60,9 @@ export function Sidebar({ selectedBatchId, onSelectBatch }: SidebarProps) {
               key={batch.id}
               batch={batch}
               actionLabel="Reserve Batch"
-
+              onAction={handleReserve}
+              isSelected={batch.id === selectedBatchId}
               onSelect={(b) => onSelectBatch(b.id)}
-              onAction={(b) => handleReserve(b)}
             />
           ))}
         </div>

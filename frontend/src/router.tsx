@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./layout/Layout";
+import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import ClaimedBatches from "./pages/ClaimedBatches";
 import Transactions from "./pages/Transactions";
@@ -9,6 +10,10 @@ import NotFound from "./pages/NotFound";
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <LandingPage />,
+  },
+  {
+    path: "/dashboard",
     element: <Layout />,
     children: [
       { index: true, element: <Dashboard /> },
@@ -18,4 +23,5 @@ export const router = createBrowserRouter([
       { path: "*", element: <NotFound /> },
     ],
   },
+  { path: "*", element: <NotFound /> },
 ]);
