@@ -8,7 +8,7 @@ function NotFound() {
         The page you're looking for doesn't exist.
       </p>
       <Link to="/" className="text-primary underline mt-4 inline-block">
-        Back to Dashboard
+        Back to Home
       </Link>
     </div>
   );
