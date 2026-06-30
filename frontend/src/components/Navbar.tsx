@@ -2,10 +2,10 @@ import { NavLink } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
-  { label: "Dashboard", to: "/" },
-  { label: "Claimed Batches", to: "/claimed-batches" },
-  { label: "Transactions", to: "/transactions" },
-  { label: "Impact", to: "/impact" },
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "Claimed Batches", to: "/dashboard/claimed-batches" },
+  { label: "Transactions", to: "/dashboard/transactions" },
+  { label: "Impact", to: "/dashboard/impact" },
 ];
 
 export function Navbar() {
@@ -18,6 +18,7 @@ export function Navbar() {
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.to === "/dashboard"}
             className={({ isActive }) =>
               `text-sm font-medium transition-colors ${
                 isActive
