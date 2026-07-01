@@ -19,6 +19,11 @@ const STEPS = [
 const supplyImage = "/src/assets/supplyImg.webp";
 
 export function EcosystemSection() {
+  const scrollToPartner = () => {
+    const section = document.getElementById("partner");
+    section?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <section id="solution" className="px-8 py-20 bg-tile/30">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -36,15 +41,6 @@ export function EcosystemSection() {
           {/* Industrial image placeholder */}
           <div className="h-48 bg-gradient-to-b from-[#1a3a5c] to-[#0a1628] flex items-full justify-center overflow-full">
             <img src={supplyImage} alt="Supply Chain" className="h-full object-cover" />
-           {/* <div className="flex gap-3 items-end opacity-60">
-              {[80, 120, 100, 140, 90].map((h, i) => (
-                <div
-                  key={i}
-                  className="w-6 bg-primary/40 rounded-t"
-                  style={{ height: h }}
-                />
-              ))}
-            </div>*/}
           </div>
 
           {/* Floating card */}
@@ -87,6 +83,7 @@ export function EcosystemSection() {
 
           <button
             type="button"
+            onClick={scrollToPartner}
             className="mt-8 px-6 py-2.5 border border-primary text-primary rounded-pill text-sm font-semibold hover:bg-primary/10 transition-colors"
           >
             View Process Details

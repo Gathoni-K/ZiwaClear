@@ -1,8 +1,18 @@
+import { Link } from "react-router-dom";
 import { Waves, Mail, Phone, MapPin, Globe, Share2 } from "lucide-react";
 
-const FOOTER_LINKS = {
-  Marketplace: ["Harvesting Map", "Pricing Index", "Supply Tracking", "Logistics API"],
-  Company: ["About ZiwaClear", "Climate Impact", "Press Kit", "Legal & Privacy"],
+const FOOTER_LINKS: Record<string, { label: string; to: string }[]> = {
+  Marketplace: [
+    { label: "Harvesting Map", to: "/dashboard" },
+    { label: "Pricing Index", to: "/dashboard" },
+    { label: "Supply Tracking", to: "/dashboard/claimed-batches" },
+    { label: "Logistics API", to: "/dashboard/transactions" },
+  ],
+  Company: [
+    { label: "About ZiwaClear", to: "/about" },
+    { label: "Climate Impact", to: "/dashboard/impact" },
+    { label: "Legal & Privacy", to: "/privacy" },
+  ],
 };
 
 export function LandingFooter() {
@@ -37,7 +47,7 @@ export function LandingFooter() {
           {/* Logo + description */}
           <div className="col-span-2 md:col-span-1">
             <span className="flex items-center gap-2 font-bold text-primary">
-              <img src="/logo.png" alt="ZiwaClear Logo" /> 
+              <img src="/logo.png" alt="ZiwaClear Logo" />
             </span>
             <p className="text-xs text-muted mt-3 leading-relaxed">
               The premium marketplace for climate assets and biomass restoration
@@ -50,14 +60,20 @@ export function LandingFooter() {
             <div key={title}>
               <p className="text-sm font-bold mb-3">{title}</p>
               <ul className="flex flex-col gap-2">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-muted hover:text-primary transition-colors"
-                    >
-                      {link}
-                    </a>
+                {links.map(({ label, to }) => (
+                  <li key={label}>
+                    {to === "#" ? (
+                      <span className="text-sm text-muted cursor-default">
+                        {label}
+                      </span>
+                    ) : (
+                      <Link
+                        to={to}
+                        className="text-sm text-muted hover:text-primary transition-colors"
+                      >
+                        {label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
