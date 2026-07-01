@@ -1,36 +1,80 @@
-import { VISION_ITEMS } from "../../api/mockLanding";
+const fishImage = "/src/assets/fishWaste.jpeg";
+const hyacinthImage = "/src/assets/dryHyacinth.jpeg";
+
+const VISION_CARDS = [
+  {
+    tag: "Coming Q3 2027",
+    title: "Fish waste Collection",
+    description:
+      "Converting waste from the fishing industry into protein-rich animal feed and high-quality fish oil for medicine.",
+    image: fishImage,
+  },
+  {
+    tag: "Scaling Operations",
+    title: "Dry Hyacinth Optimization",
+    description:
+      "Making moisture-controlled collection systems to produce high-quality fibers for clothing and high-energy briquettes for fuel.",
+    image: hyacinthImage,
+  },
+];
 
 export function VisionSection() {
   return (
-    <section id="vision" className="px-6 py-10 bg-tile/40">
-      <h2 className="text-2xl font-bold text-center mb-1">
-        Vision <span className="text-primary">v2.0</span>
-      </h2>
-      <p className="text-muted text-center text-sm mb-2 max-w-sm mx-auto">
-        Approved milestones for system expansion and scaling to handle the
-        lake's full hyacinth coverage.
-      </p>
-      <p className="text-center mb-6">
-        <span className="inline-block text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-          2025 Roadmap
+    <section id="vision" className="px-8 py-20 max-w-6xl mx-auto">
+      <div className="flex items-start justify-between mb-10 flex-wrap gap-4">
+        <div>
+          <h2 className="text-4xl font-bold">
+            Vision <span className="text-primary">v2.0</span>
+          </h2>
+          <p className="text-muted mt-2 max-w-sm">
+           Moving beyond water hyacinth to turn all types of lake waste into wealth for the local region.
+          </p>
+        </div>
+        <span className="flex items-center gap-2 text-sm font-semibold text-primary border border-primary/30 bg-primary/10 px-4 py-2 rounded-full">
+          ✦ 2027 Roadmap
         </span>
-      </p>
+      </div>
 
-      <div className="flex flex-col gap-4 max-w-md mx-auto">
-        {VISION_ITEMS.map((item) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {VISION_CARDS.map((card) => (
           <div
-            key={item.label}
-            className="rounded-tile overflow-hidden border border-border-ui"
+            key={card.title}
+            className="relative rounded-2xl overflow-hidden border border-border-ui min-h-[320px] flex flex-col justify-end p-6"
+            style={{
+              backgroundImage: `url(${card.image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
           >
-            {/* Image placeholder — swap for a real photo asset later */}
-            <div className="h-36 bg-gradient-to-br from-[#0B3D4C] via-[#0A2A38] to-background flex items-end p-4">
-              <span className="text-xs font-semibold text-primary bg-background/70 px-2 py-1 rounded-full uppercase tracking-wide">
-                {item.label}
-              </span>
+            {/* Dark gradient overlay to make text pop */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent z-0" />
+
+            {/* Decorative texture overlay */}
+            <div className="absolute inset-0 opacity-10 z-0 pointer-events-none">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full border border-primary/30"
+                  style={{
+                    width: `${(i + 1) * 40}px`,
+                    height: `${(i + 1) * 40}px`,
+                    top: `${Math.random() * 60}%`,
+                    left: `${Math.random() * 60}%`,
+                  }}
+                />
+              ))}
             </div>
-            <div className="p-4">
-              <h3 className="font-bold">{item.title}</h3>
-              <p className="text-sm text-muted mt-1">{item.description}</p>
+
+            {/* Content Container (z-10 brings it above the overlay) */}
+            <div className="relative z-10">
+              <p className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest">
+                <span className="w-6 border-t border-primary" />
+                {card.tag}
+              </p>
+              <h3 className="text-xl font-bold text-white mt-2">
+                {card.title}
+              </h3>
+              <p className="text-sm text-white/80 mt-1">{card.description}</p>
             </div>
           </div>
         ))}
