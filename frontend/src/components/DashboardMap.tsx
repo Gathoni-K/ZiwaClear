@@ -5,7 +5,6 @@ import "../lib/leafletIconFix";
 import { useBatches } from "../hooks/useBatches";
 import { timeAgo } from "../lib/timeAgo";
 
-
 const KISUMU_CENTER: [number, number] = [-0.0917, 34.768];
 const DEFAULT_ZOOM = 9;
 
@@ -14,8 +13,7 @@ interface DashboardMapProps {
   onSelectBatch: (id: string) => void;
 }
 
-// Watches for selectedBatchId changes 
-// and opens that marker's popup + pans the map to it.
+
 function SelectedMarkerSync({
   selectedBatchId,
   markerRefs,
@@ -26,19 +24,15 @@ function SelectedMarkerSync({
   positions: Map<string, [number, number]>;
 }) {
   const map = useMap();
-
   useEffect(() => {
     if (!selectedBatchId) return;
-
     const marker = markerRefs.current.get(selectedBatchId);
     const position = positions.get(selectedBatchId);
-
     if (marker && position) {
       map.panTo(position);
       marker.openPopup();
     }
   }, [selectedBatchId, map, markerRefs, positions]);
-
   return null;
 }
 
@@ -47,11 +41,15 @@ export function DashboardMap({
   onSelectBatch,
 }: DashboardMapProps) {
   const { data: batches } = useBatches();
-  const availableBatches = batches?.filter((b) => b.status === "available");
+
+  const geoBatches = batches?.filter(
+    (b) =>
+      b.status === "available" && b.latitude != null && b.longitude != null
+  );
 
   const markerRefs = useRef<Map<string, LeafletMarker>>(new Map());
   const positions = new Map<string, [number, number]>(
-    availableBatches?.map((b) => [b.id, [b.latitude, b.longitude]]) ?? []
+    geoBatches?.map((b) => [b.id, [b.latitude as number, b.longitude as number]]) ?? []
   );
 
   return (
@@ -65,17 +63,15 @@ export function DashboardMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-
       <SelectedMarkerSync
         selectedBatchId={selectedBatchId}
         markerRefs={markerRefs}
         positions={positions}
       />
-
-      {availableBatches?.map((batch) => (
+      {geoBatches?.map((batch) => (
         <Marker
           key={batch.id}
-          position={[batch.latitude, batch.longitude]}
+          position={[batch.latitude as number, batch.longitude as number]}
           ref={(ref) => {
             if (ref) markerRefs.current.set(batch.id, ref);
             else markerRefs.current.delete(batch.id);
@@ -86,10 +82,11 @@ export function DashboardMap({
         >
           <Popup>
             <div className="text-sm">
-              <p className="font-bold">{batch.weightKg.toLocaleString()} kg</p>
+              <p className="font-bold">{batch.quantityKg.toLocaleString()} kg</p>
               <p>{batch.locationName}</p>
               <p className="text-xs text-gray-500">
-                ★ {batch.verificationRating}/5 · {timeAgo(batch.collectedAt)}
+                {batch.qualityRating != null ? `★ ${batch.qualityRating}/5 · ` : ""}
+                {timeAgo(batch.collectedAt ?? batch.createdAt)}
               </p>
             </div>
           </Popup>
