@@ -19,7 +19,7 @@ export function ClaimedBatchCard({
         </span>
         <div className="text-right">
           <span className="text-xl font-bold text-primary">
-            {batch.weightKg.toLocaleString()} kg
+            {batch.quantityKg.toLocaleString()} kg
           </span>
           {batch.materialType && (
             <p className="text-xs text-muted uppercase tracking-wide">

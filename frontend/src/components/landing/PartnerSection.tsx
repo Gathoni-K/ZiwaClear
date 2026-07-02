@@ -29,7 +29,7 @@ export function PartnerSection() {
   }
 
   return (
-    <section className="px-8 py-20 bg-tile/30">
+    <section id="partner" className="px-8 py-20 bg-tile/30">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         {/* Left: pitch + benefits */}
         <div>

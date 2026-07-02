@@ -86,10 +86,10 @@ export function DashboardMap({
         >
           <Popup>
             <div className="text-sm">
-              <p className="font-bold">{batch.weightKg.toLocaleString()} kg</p>
+              <p className="font-bold">{batch.quantityKg.toLocaleString()} kg</p>
               <p>{batch.locationName}</p>
               <p className="text-xs text-gray-500">
-                ★ {batch.verificationRating}/5 · {timeAgo(batch.collectedAt)}
+                ★ {batch.qualityRating ?? "—"}/5 · {timeAgo(batch.createdAt)}
               </p>
             </div>
           </Popup>

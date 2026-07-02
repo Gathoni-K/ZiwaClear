@@ -1,5 +1,5 @@
-const fishImage = "/src/assets/fishWaste.jpeg";
-const hyacinthImage = "/src/assets/dryHyacinth.jpeg";
+import fishImage from "../../assets/fishWaste.jpeg";
+import hyacinthImage from "../../assets/dryHyacinth.jpeg";
 
 const VISION_CARDS = [
   {
@@ -27,7 +27,7 @@ export function VisionSection() {
             Vision <span className="text-primary">v2.0</span>
           </h2>
           <p className="text-muted mt-2 max-w-sm">
-           Moving beyond water hyacinth to turn all types of lake waste into wealth for the local region.
+            Moving beyond water hyacinth to turn all types of lake waste into wealth for the local region.
           </p>
         </div>
         <span className="flex items-center gap-2 text-sm font-semibold text-primary border border-primary/30 bg-primary/10 px-4 py-2 rounded-full">
@@ -46,8 +46,7 @@ export function VisionSection() {
               backgroundPosition: "center",
             }}
           >
-            {/* Dark gradient overlay to make text pop */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent z-0" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent z-0" />
 
             {/* Decorative texture overlay */}
             <div className="absolute inset-0 opacity-10 z-0 pointer-events-none">
@@ -65,7 +64,7 @@ export function VisionSection() {
               ))}
             </div>
 
-            {/* Content Container (z-10 brings it above the overlay) */}
+            {/* Content Container */}
             <div className="relative z-10">
               <p className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest">
                 <span className="w-6 border-t border-primary" />

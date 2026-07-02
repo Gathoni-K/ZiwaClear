@@ -15,13 +15,15 @@ interface BatchCardProps {
 const STATUS_STYLES: Record<Batch["status"], string> = {
   available: "bg-primary/10 text-primary",
   claimed: "bg-secondary/10 text-secondary",
-  delivered: "bg-muted/10 text-muted",
+  collected: "bg-muted/10 text-muted",
+  flagged: "bg-danger/10 text-danger",
 };
 
 const STATUS_LABELS: Record<Batch["status"], string> = {
   available: "Available",
   claimed: "Claimed",
-  delivered: "Delivered",
+  collected: "Collected",
+  flagged: "Flagged",
 };
 
 export function BatchCard({
@@ -42,16 +44,16 @@ export function BatchCard({
     >
       <div className="flex items-baseline justify-between">
         <span className="text-xl font-bold text-primary">
-          {batch.weightKg.toLocaleString()} kg
+          {batch.quantityKg.toLocaleString()} kg
         </span>
-        <span className="text-xs text-muted">{timeAgo(batch.collectedAt)}</span>
+        <span className="text-xs text-muted">{timeAgo(batch.createdAt)}</span>
       </div>
 
       <p className="text-sm font-medium mt-1">{batch.locationName}</p>
 
       <div className="flex items-center justify-between mt-1">
         <p className="text-xs text-tertiary">
-          ★ {batch.verificationRating}/5 Certified
+          ★ {batch.qualityRating ?? "—"}/5 Certified
         </p>
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLES[batch.status]}`}

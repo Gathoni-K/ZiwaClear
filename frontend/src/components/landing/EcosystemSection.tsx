@@ -1,3 +1,5 @@
+import supplyImage from "../../assets/supplyImg.webp";
+
 const STEPS = [
   {
     title: "Decentralized Harvesting",
@@ -15,8 +17,6 @@ const STEPS = [
       "High-purity biomass delivered consistently for industrial-scale renewable energy and soil health products.",
   },
 ];
-
-const supplyImage = "/src/assets/supplyImg.webp";
 
 export function EcosystemSection() {
   const scrollToPartner = () => {
@@ -38,9 +38,9 @@ export function EcosystemSection() {
             <span className="text-muted">⋯</span>
           </div>
 
-          {/* Industrial image placeholder */}
-          <div className="h-48 bg-gradient-to-b from-[#1a3a5c] to-[#0a1628] flex items-full justify-center overflow-full">
-            <img src={supplyImage} alt="Supply Chain" className="h-full object-cover" />
+          {/* Industrial image */}
+          <div className="h-48 flex items-full justify-center overflow-full">
+            <img src={supplyImage} alt="Supply Chain" className="h-full w-full object-cover" />
           </div>
 
           {/* Floating card */}
@@ -56,7 +56,7 @@ export function EcosystemSection() {
           </div>
         </div>
 
-        {/* Right: numbered steps */}
+        
         <div>
           <h2 className="text-3xl font-bold">
             The Marketplace{" "}

@@ -22,10 +22,17 @@ export const router = createBrowserRouter([
       { path: "claimed-batches", element: <ClaimedBatches /> },
       { path: "transactions", element: <Transactions /> },
       { path: "impact", element: <Impact /> },
-      { path: "*", element: <NotFound /> },
     ],
   },
-  { path: "/about", element: <About /> },
-  { path: "/privacy", element: <Privacy /> },
+  {
+    path: "/about",
+    element: <Layout />,
+    children: [{ index: true, element: <About /> }],
+  },
+  {
+    path: "/privacy",
+    element: <Layout />,
+    children: [{ index: true, element: <Privacy /> }],
+  },
   { path: "*", element: <NotFound /> },
 ]);
