@@ -13,6 +13,10 @@ export interface Batch {
   claimedAt: string | null;
   collectedAt: string | null;
   notes: string | null;
+  batchCode: string | null;
+  materialType: string | null;
+  region: string | null;
+  expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

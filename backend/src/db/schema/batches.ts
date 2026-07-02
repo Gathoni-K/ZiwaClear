@@ -17,6 +17,10 @@ export const batches = pgTable("batches", {
     claimedAt: timestamp("claimed_at", { withTimezone: true }),
     collectedAt: timestamp("collected_at", { withTimezone: true }),
     notes: text("notes"),
+    batchCode: varchar("batch_code", { length: 20 }).unique(),
+    materialType: varchar("material_type", { length: 100 }),
+    region: varchar("region", { length: 100 }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
