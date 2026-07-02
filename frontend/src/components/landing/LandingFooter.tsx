@@ -1,62 +1,122 @@
 import { Link } from "react-router-dom";
-import { Waves, Mail, Phone } from "lucide-react";
+import { Waves, Mail, Phone, MapPin, Globe, Share2 } from "lucide-react";
 
-const FOOTER_COLUMNS = [
-  {
-    title: "Marketplace",
-    links: ["Browse Batches", "Submit Yield", "Logistics"],
-  },
-  {
-    title: "Company",
-    links: ["About Us", "Our Impact", "Contact"],
-  },
-];
+const FOOTER_LINKS: Record<string, { label: string; to: string }[]> = {
+  Marketplace: [
+    { label: "Harvesting Map", to: "/dashboard" },
+    { label: "Pricing Index", to: "/dashboard" },
+    { label: "Supply Tracking", to: "/dashboard/claimed-batches" },
+    { label: "Logistics API", to: "/dashboard/transactions" },
+  ],
+  Company: [
+    { label: "About ZiwaClear", to: "/about" },
+    { label: "Climate Impact", to: "/dashboard/impact" },
+    { label: "Legal & Privacy", to: "/privacy" },
+  ],
+};
 
 export function LandingFooter() {
   return (
-    <footer className="px-6 py-10 border-t border-border-ui">
-      <h2 className="text-xl font-bold text-center">Questions? Reach out.</h2>
-      <p className="text-sm text-muted text-center mt-1 max-w-xs mx-auto">
-        Our team is ready to provide the technical documentation and
-        partnership details you need.
-      </p>
-
-      <div className="flex flex-col items-center gap-2 mt-4 text-sm">
-        <span className="flex items-center gap-2 text-muted">
-          <Mail size={14} /> hello@ziwaclear.com
-        </span>
-        <span className="flex items-center gap-2 text-muted">
-          <Phone size={14} /> +254 700 123 456
-        </span>
+    <footer>
+      {/* Contact bar */}
+      <div className="px-8 py-12 border-t border-border-ui text-center">
+        <h2 className="text-2xl font-bold">Questions? Reach out.</h2>
+        <p className="text-muted mt-2 max-w-lg mx-auto text-sm">
+          Our team is ready to provide the technical documentation and
+          marketplace details you need.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-8 mt-6 text-sm text-muted">
+          <span className="flex items-center gap-2">
+            <Mail size={15} className="text-primary" />
+            hello@ziwaclear.com
+          </span>
+          <span className="flex items-center gap-2">
+            <Phone size={15} className="text-primary" />
+            +254 (0) 700 123 456
+          </span>
+          <span className="flex items-center gap-2">
+            <MapPin size={15} className="text-primary" />
+            Kisumu Hub, Kenya
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mt-10 max-w-xs mx-auto">
-        {FOOTER_COLUMNS.map((col) => (
-          <div key={col.title}>
-            <p className="text-xs uppercase tracking-wide text-muted mb-2">
-              {col.title}
+      {/* Main footer columns */}
+      <div className="border-t border-border-ui px-8 py-10 bg-tile/30">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-10">
+          {/* Logo + description */}
+          <div className="col-span-2 md:col-span-1">
+            <span className="flex items-center gap-2 font-bold text-primary">
+              <img src="/logo.png" alt="ZiwaClear Logo" />
+            </span>
+            <p className="text-xs text-muted mt-3 leading-relaxed">
+              The premium marketplace for climate assets and biomass restoration
+              in the Great Lakes region.
             </p>
-            <ul className="flex flex-col gap-1.5 text-sm">
-              {col.links.map((link) => (
-                <li key={link}>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
           </div>
-        ))}
+
+          {/* Marketplace + Company columns */}
+          {Object.entries(FOOTER_LINKS).map(([title, links]) => (
+            <div key={title}>
+              <p className="text-sm font-bold mb-3">{title}</p>
+              <ul className="flex flex-col gap-2">
+                {links.map(({ label, to }) => (
+                  <li key={label}>
+                    {to === "#" ? (
+                      <span className="text-sm text-muted cursor-default">
+                        {label}
+                      </span>
+                    ) : (
+                      <Link
+                        to={to}
+                        className="text-sm text-muted hover:text-primary transition-colors"
+                      >
+                        {label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          {/* Connect column */}
+          <div>
+            <p className="text-sm font-bold mb-3">Connect</p>
+            <div className="flex gap-3 mb-4">
+              {[Globe, Waves, Share2].map((Icon, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="w-9 h-9 rounded-full border border-border-ui flex items-center justify-center text-muted hover:text-primary hover:border-primary transition-colors"
+                >
+                  <Icon size={15} />
+                </button>
+              ))}
+            </div>
+            <div className="border border-border-ui rounded-input p-3 text-xs">
+              <p className="text-muted uppercase tracking-widest text-[10px]">
+                Powered by
+              </p>
+              <p className="font-bold text-primary mt-0.5">
+                ✦ ZIWÀINSIGHT ENGINE
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2 mt-10 pt-6 border-t border-border-ui text-xs text-muted">
-        <span className="flex items-center gap-2 font-bold text-primary text-sm">
-          <Waves size={16} /> ZiwaClear
-        </span>
-        <span>© 2024 ZiwaClear. All rights reserved.</span>
-        <Link to="/dashboard" className="hover:text-primary transition-colors">
-          Investor Dashboard
-        </Link>
+      {/* Bottom bar */}
+      <div className="border-t border-border-ui px-8 py-4 flex items-center justify-between text-xs text-muted max-w-none">
+        <span>© 2026 ZiwaClear Marketplace. All rights reserved.</span>
+        <div className="flex gap-6">
+          <a href="#" className="hover:text-primary transition-colors">
+            Terms of Service
+          </a>
+          <a href="#" className="hover:text-primary transition-colors">
+            Data Transparency Policy
+          </a>
+        </div>
       </div>
     </footer>
   );

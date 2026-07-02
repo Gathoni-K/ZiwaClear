@@ -5,6 +5,8 @@ import Dashboard from "./pages/Dashboard";
 import ClaimedBatches from "./pages/ClaimedBatches";
 import Transactions from "./pages/Transactions";
 import Impact from "./pages/Impact";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -23,5 +25,7 @@ export const router = createBrowserRouter([
       { path: "*", element: <NotFound /> },
     ],
   },
+  { path: "/about", element: <About /> },
+  { path: "/privacy", element: <Privacy /> },
   { path: "*", element: <NotFound /> },
 ]);
