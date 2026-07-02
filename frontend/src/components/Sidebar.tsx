@@ -13,8 +13,6 @@ export function Sidebar({ selectedBatchId, onSelectBatch }: SidebarProps) {
   const availableBatches = batches?.filter((b) => b.status === "available");
 
   function handleReserve(batch: { id: string }) {
-    // TODO: once a real backend exists, call the reserve/claim endpoint here
-    // before navigating, and show an error toast if it fails.
     console.log("Reserve clicked:", batch.id);
     navigate("/dashboard/claimed-batches");
   }

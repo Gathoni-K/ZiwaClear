@@ -28,9 +28,7 @@ export function ClaimedBatchCard({
           )}
         </div>
       </div>
-
       <h3 className="text-lg font-bold mt-2">{batch.locationName}</h3>
-
       <div className="flex items-center gap-4 mt-2 text-sm text-muted">
         {batch.region && (
           <span className="flex items-center gap-1">
@@ -43,7 +41,6 @@ export function ClaimedBatchCard({
           </span>
         )}
       </div>
-
       <button
         type="button"
         onClick={() => onConfirmCollection?.(batch)}

@@ -16,15 +16,11 @@ export interface Batch {
   updatedAt: string;
   notes?: string | null;
 
-  
   batchCode?: string;
-  
   materialType?: string;
   region?: string;
- 
   expiresAt?: string;
 }
-
 
 export function mapBatch(raw: Partial<Batch> & { id: string; quantityKg: number; locationName: string; harvesterPhone: string; createdAt: string; updatedAt: string; status: Batch["status"] }): Batch {
   return {
