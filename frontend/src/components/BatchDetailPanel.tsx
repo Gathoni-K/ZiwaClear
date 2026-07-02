@@ -26,24 +26,25 @@ export function BatchDetailPanel({
           <X size={18} />
         </button>
       </div>
-
       <p className="text-2xl font-bold text-primary mt-2">
-        {batch.weightKg.toLocaleString()} kg
+        {batch.quantityKg.toLocaleString()} kg
       </p>
-
       <div className="flex flex-col gap-2 mt-3 text-sm text-muted">
+        {batch.latitude != null && batch.longitude != null && (
+          <span className="flex items-center gap-2">
+            <MapPin size={14} /> {batch.latitude.toFixed(4)},{" "}
+            {batch.longitude.toFixed(4)}
+          </span>
+        )}
         <span className="flex items-center gap-2">
-          <MapPin size={14} /> {batch.latitude.toFixed(4)},{" "}
-          {batch.longitude.toFixed(4)}
+          <Clock size={14} /> Posted {timeAgo(batch.collectedAt ?? batch.createdAt)}
         </span>
-        <span className="flex items-center gap-2">
-          <Clock size={14} /> Posted {timeAgo(batch.collectedAt)}
-        </span>
-        <span className="flex items-center gap-2">
-          <Star size={14} /> {batch.verificationRating}/5 Certified
-        </span>
+        {batch.qualityRating != null && (
+          <span className="flex items-center gap-2">
+            <Star size={14} /> {batch.qualityRating}/5 Certified
+          </span>
+        )}
       </div>
-
       <button
         type="button"
         onClick={() => onReserve?.(batch)}
