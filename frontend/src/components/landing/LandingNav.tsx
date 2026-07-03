@@ -1,8 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../ThemeToggle";
+import { UserMenu } from "../UserMenu";
+import { useAuth } from "../../context/AuthContext";
 
 export function LandingNav() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const isDashboard = pathname.startsWith("/dashboard");
 
   return (
@@ -43,20 +47,31 @@ export function LandingNav() {
 
       <div className="flex items-center gap-4">
         <ThemeToggle />
-        {isDashboard ? (
+
+        {isAuthenticated ? (
+          <UserMenu />
+        ) : isDashboard ? (
           <Link
-            to="/"
+            to="/login"
             className="text-sm font-semibold border border-primary text-primary px-5 py-2 rounded-pill hover:bg-primary/10 transition-colors"
           >
-            ← Home page
+            Sign In
           </Link>
         ) : (
-          <Link
-            to="/dashboard"
-            className="text-sm font-semibold bg-primary text-background px-5 py-2 rounded-pill hover:bg-primary-hover transition-colors"
-          >
-            Join Marketplace
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/login"
+              className="text-sm font-semibold border border-primary text-primary px-5 py-2 rounded-pill hover:bg-primary/10 transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/login"
+              className="text-sm font-semibold bg-primary text-background px-5 py-2 rounded-pill hover:bg-primary-hover transition-colors"
+            >
+              Join Marketplace
+            </Link>
+          </div>
         )}
       </div>
     </header>

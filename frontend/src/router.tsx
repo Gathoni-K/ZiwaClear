@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./layout/Layout";
 import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import ClaimedBatches from "./pages/ClaimedBatches";
 import Transactions from "./pages/Transactions";
@@ -10,10 +11,8 @@ import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <LandingPage />,
-  },
+  { path: "/", element: <LandingPage /> },
+  { path: "/login", element: <LoginPage /> },
   {
     path: "/dashboard",
     element: <Layout />,
