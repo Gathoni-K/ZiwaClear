@@ -7,6 +7,7 @@ export class BatchController {
             const batches = await batchService.getAvailableBatches();
             return res.json({ success: true, data: batches });
         } catch (error) {
+            console.error("[BatchController.listAvailable] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -24,6 +25,7 @@ export class BatchController {
             const batches = await batchService.listBatches(filters);
             return res.json({ success: true, data: batches });
         } catch (error) {
+            console.error("[BatchController.list] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -36,12 +38,11 @@ export class BatchController {
                 return res.status(400).json({ success: false, message: "Invalid ID" });
             }
 
-            // REMOVED: parseInt check since IDs are UUID strings
             const batch = await batchService.getBatchById(id);
 
             if (!batch) return res.status(404).json({ success: false, message: "Batch not found" });
 
-            // Attach yield predictions
+
             const biogasM3 = Math.round(batch.quantityKg * 0.07 * 100) / 100;
             const fertilizerKgN = Math.round(batch.quantityKg * 0.002 * 1000) / 1000;
 
@@ -57,6 +58,7 @@ export class BatchController {
                 }
             });
         } catch (error) {
+            console.error("[BatchController.getById] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -73,6 +75,7 @@ export class BatchController {
             const batch = await batchService.claimBatch(id, buyerId);
             return res.json({ success: true, data: batch, message: "Batch claimed successfully" });
         } catch (error: any) {
+            console.error("[BatchController.claim] Error:", error);
             if (error.message === "Batch not found") return res.status(404).json({ success: false, message: error.message });
             if (error.message === "Batch is not available") return res.status(400).json({ success: false, message: error.message });
             return res.status(500).json({ success: false, message: "Internal server error" });
@@ -91,6 +94,7 @@ export class BatchController {
             const batch = await batchService.collectBatch(id, qualityRating, notes);
             return res.json({ success: true, data: batch, message: "Batch collected successfully" });
         } catch (error: any) {
+            console.error("[BatchController.collect] Error:", error);
             if (error.message === "Batch not found") return res.status(404).json({ success: false, message: error.message });
             if (error.message.includes("must be claimed")) return res.status(400).json({ success: false, message: error.message });
             return res.status(500).json({ success: false, message: "Internal server error" });
@@ -102,6 +106,7 @@ export class BatchController {
             const impact = await batchService.getImpactStats();
             return res.json({ success: true, data: impact });
         } catch (error) {
+            console.error("[BatchController.getImpact] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -118,6 +123,7 @@ export class BatchController {
                 }
             });
         } catch (error) {
+            console.error("[BatchController.getPrice] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -132,6 +138,7 @@ export class BatchController {
             await batchService.deleteBatch(id);
             return res.json({ success: true, message: "Batch deleted successfully" });
         } catch (error) {
+            console.error("[BatchController.delete] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
