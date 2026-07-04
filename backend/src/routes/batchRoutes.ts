@@ -5,7 +5,7 @@ import { claimBatchValidator, collectBatchValidator } from "../validations/batch
 
 export const batchRouter = Router();
 
-// Public read routes — no auth needed for hackathon demo
+
 batchRouter.get("/", batchController.listAvailable);
 batchRouter.get("/all", batchController.list);
 batchRouter.get("/impact", batchController.getImpact);
