@@ -1,26 +1,29 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardMap } from "../components/DashboardMap";
 import { BatchDetailPanel } from "../components/BatchDetailPanel";
 import { useBatches } from "../hooks/useBatches";
+import { useClaimBatch } from "../hooks/useClaimBatch";
 
 function Dashboard() {
-  const navigate = useNavigate();
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: batches } = useBatches();
+  const claimMutation = useClaimBatch();
 
   const selectedBatch = batches?.find((b) => b.id === selectedBatchId) ?? null;
 
-  function handleReserve(batch: { id: string }) {
-    console.log("Reserve clicked:", batch.id);
-    navigate("/dashboard/claimed-batches");
+  // Called from Sidebar card or Detail panel button
+  function handleReserve(batchId: string) {
+    // 1. Close the detail panel immediately
+    setSelectedBatchId(null);
+    // 2. Optimistic update the status to "claimed"
+    claimMutation.mutate(batchId);
   }
 
   return (
     <div className="flex flex-col lg:flex-row h-full relative">
-      {/* Mobile toggle button */}
+      {/* Mobile toggle */}
       <button
         type="button"
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -29,7 +32,7 @@ function Dashboard() {
         {sidebarOpen ? "Hide List" : "Show Batches"}
       </button>
 
-      {/* Sidebar — slides in on mobile */}
+      {/* Sidebar */}
       <div
         className={`${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -41,6 +44,7 @@ function Dashboard() {
             setSelectedBatchId(id);
             setSidebarOpen(false);
           }}
+          onReserve={handleReserve}
         />
       </div>
 

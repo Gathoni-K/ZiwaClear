@@ -5,7 +5,7 @@ import { timeAgo } from "../lib/timeAgo";
 interface BatchDetailPanelProps {
   batch: Batch;
   onClose: () => void;
-  onReserve?: (batch: Batch) => void;
+  onReserve: (batchId: string) => void;   // changed to accept batch ID
 }
 
 export function BatchDetailPanel({
@@ -47,7 +47,7 @@ export function BatchDetailPanel({
       </div>
       <button
         type="button"
-        onClick={() => onReserve?.(batch)}
+        onClick={() => onReserve(batch.id)}   // pass just the ID
         className="w-full mt-4 py-2.5 rounded-pill bg-primary text-background font-semibold text-sm hover:bg-primary-hover transition-colors"
       >
         Reserve Batch
