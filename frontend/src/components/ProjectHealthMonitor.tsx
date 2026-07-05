@@ -16,14 +16,14 @@ export function ProjectHealthMonitor() {
             aria-label="Refresh"
             className="w-7 h-7 md:w-8 md:h-8 rounded-md bg-input border border-border-ui flex items-center justify-center hover:bg-border-ui/50 transition-colors"
           >
-            <RefreshCw size={12} className="md:size-14" />
+            <RefreshCw size={12} className="md:size-[14px]" />
           </button>
           <button
             type="button"
             aria-label="More options"
             className="w-7 h-7 md:w-8 md:h-8 rounded-md bg-input border border-border-ui flex items-center justify-center hover:bg-border-ui/50 transition-colors"
           >
-            <MoreVertical size={12} className="md:size-14" />
+            <MoreVertical size={12} className="md:size-[14px]" />
           </button>
         </div>
       </div>

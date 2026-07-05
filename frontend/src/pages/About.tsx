@@ -121,7 +121,7 @@ export default function About() {
                 key={label}
                 className="bg-tile border border-border-ui rounded-xl p-5 md:p-6"
               >
-                <Icon size={24} className="text-primary mx-auto mb-3 md:size-28" />
+                <Icon size={24} className="text-primary mx-auto mb-3 md:size-[28px]" />
                 <p className="text-2xl md:text-3xl font-bold">{value}</p>
                 <p className="text-xs md:text-sm text-muted mt-2">{label}</p>
               </div>

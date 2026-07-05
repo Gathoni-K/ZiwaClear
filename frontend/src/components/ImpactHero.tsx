@@ -11,7 +11,7 @@ export function ImpactHero() {
 
       <div className="relative z-10">
         <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold text-primary bg-primary/15 px-2 md:px-3 py-1 rounded-full">
-          <ShieldCheck size={12} className="md:size-14" /> Impact Verified 2024
+          <ShieldCheck size={12} className="md:size-[14px]" /> Impact Verified 2024
         </span>
 
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mt-3 md:mt-4">
@@ -28,13 +28,13 @@ export function ImpactHero() {
             type="button"
             className="flex items-center gap-2 bg-primary text-background font-semibold text-xs md:text-sm px-4 py-2.5 rounded-pill hover:bg-primary-hover transition-colors w-full sm:w-auto justify-center"
           >
-            View Detailed Report <ArrowRight size={14} className="md:size-16" />
+            View Detailed Report <ArrowRight size={14} className="md:size-[16px]" />
           </button>
           <button
             type="button"
             className="flex items-center gap-2 bg-white/10 text-white font-semibold text-xs md:text-sm px-4 py-2.5 rounded-pill hover:bg-white/15 transition-colors border border-white/20 w-full sm:w-auto justify-center"
           >
-            Download ESG Data <Download size={14} className="md:size-16" />
+            Download ESG Data <Download size={14} className="md:size-[16px]" />
           </button>
         </div>
       </div>
