@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import heroImg from "../../assets/heroImg.webp";
+import { useAuth } from "../../context/AuthContext";
 
 export function HeroSection() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="px-4 md:px-8 py-12 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center max-w-6xl mx-auto">
       {/* Left: text */}
@@ -28,7 +31,7 @@ export function HeroSection() {
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-6 md:mt-8">
           <Link
-            to="/dashboard"
+            to={isAuthenticated ? "/dashboard" : "/login"}
             className="flex items-center gap-2 bg-primary text-background font-semibold text-sm px-5 py-3 rounded-pill hover:bg-primary-hover transition-colors w-full sm:w-auto justify-center"
           >
             Access Marketplace <ArrowRight size={16} />

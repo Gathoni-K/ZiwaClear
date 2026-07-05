@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import type { ChatMessage } from "../types/chat";
 import { ChatBubble } from "./ChatBubble";
-import { getMockResponse, streamText } from "../lib/mockChat";
+import { streamChatResponse } from "../lib/chatStream";
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
@@ -46,17 +46,28 @@ export function ChatPanel() {
     setInput("");
     setIsStreaming(true);
 
-    const fullResponse = getMockResponse(trimmed);
-
-    await streamText(fullResponse, (chunkSoFar) => {
+    try {
+      // Send all messages so the AI has full conversation context
+      const allMessages = [...messages, userMessage];
+      
+      await streamChatResponse(allMessages, (chunkSoFar) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: chunkSoFar } : m
+          )
+        );
+      });
+    } catch (error) {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantId ? { ...m, content: chunkSoFar } : m
+          m.id === assistantId
+            ? { ...m, content: "Sorry, I couldn't reach the AI service. Please try again." }
+            : m
         )
       );
-    });
-
-    setIsStreaming(false);
+    } finally {
+      setIsStreaming(false);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

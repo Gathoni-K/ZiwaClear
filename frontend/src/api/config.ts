@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export const api = {
   batches: {
@@ -27,13 +27,15 @@ export const api = {
       if (!res.ok) throw new Error("Failed to fetch pricing information");
       return res.json();
     },
-    claim: async (id: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/${id}/claim`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("Failed to claim batch");
-      return res.json();
+    claim: async (id: string, buyerId: string) => {
+  const res = await fetch(`${API_BASE_URL}/api/batches/${id}/claim`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ buyerId }),
+  });
+  if (!res.ok) throw new Error("Failed to claim batch");
+  return res.json();
+
     },
     collect: async (id: string) => {
       const res = await fetch(`${API_BASE_URL}/api/batches/${id}/collect`, {

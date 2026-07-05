@@ -66,41 +66,43 @@ export function TransactionsTable({
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 md:px-5 py-3 border-t border-border-ui text-xs md:text-sm text-muted">
-        <span>
-          Showing {transactions.length} of {totalCount} transactions
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Previous page"
-            className="w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center hover:bg-input transition-colors"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          {[1, 2, 3].map((page) => (
+      {/* Pagination — only show when there are multiple pages */}
+      {totalCount > 10 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 md:px-5 py-3 border-t border-border-ui text-xs md:text-sm text-muted">
+          <span>
+            Showing {transactions.length} of {totalCount} transactions
+          </span>
+          <div className="flex items-center gap-1">
             <button
-              key={page}
               type="button"
-              className={`w-7 h-7 md:w-8 md:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
-                page === 1
-                  ? "bg-primary text-background"
-                  : "hover:bg-input"
-              }`}
+              aria-label="Previous page"
+              className="w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center hover:bg-input transition-colors"
             >
-              {page}
+              <ChevronLeft size={14} />
             </button>
-          ))}
-          <button
-            type="button"
-            aria-label="Next page"
-            className="w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center hover:bg-input transition-colors"
-          >
-            <ChevronRight size={14} />
-          </button>
+            {[1, 2, 3].map((page) => (
+              <button
+                key={page}
+                type="button"
+                className={`w-7 h-7 md:w-8 md:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                  page === 1
+                    ? "bg-primary text-background"
+                    : "hover:bg-input"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="Next page"
+              className="w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center hover:bg-input transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
