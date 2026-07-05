@@ -29,16 +29,16 @@ export function PartnerSection() {
   }
 
   return (
-    <section id="partner" className="px-8 py-20 bg-tile/30">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+    <section id="partner" className="px-4 md:px-8 py-16 md:py-20 bg-tile/30">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-start">
         {/* Left: pitch + benefits */}
         <div>
-          <h2 className="text-4xl font-bold leading-tight">
+          <h2 className="text-2xl md:text-4xl font-bold leading-tight">
             Partner With{" "}
             <span className="text-primary">ZiwaClear</span>
           </h2>
-          <p className="text-muted mt-4 max-w-sm">
-           Join East Africa's leading market for climate technology. Secure your supply chain with accurate data on biomass materials.
+          <p className="text-muted mt-4 max-w-sm text-sm md:text-base">
+            Join East Africa's leading market for climate technology. Secure your supply chain with accurate data on biomass materials.
           </p>
 
           <ul className="flex flex-col gap-3 mt-6">
@@ -61,7 +61,7 @@ export function PartnerSection() {
         </div>
 
         {/* Right: form */}
-        <div className="rounded-2xl bg-tile border border-border-ui p-6">
+        <div className="rounded-2xl bg-tile border border-border-ui p-5 md:p-6">
           {submitted ? (
             <div className="text-center py-8">
               <CheckCircle2 size={40} className="text-primary mx-auto mb-3" />
@@ -72,7 +72,7 @@ export function PartnerSection() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs uppercase tracking-widest text-muted block mb-1.5">
                     Company Name

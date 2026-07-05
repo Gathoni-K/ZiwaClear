@@ -7,7 +7,6 @@ import { KeyMilestones } from "../components/KeyMilestones";
 import { AppSideNav } from "../components/AppSideNav";
 import {
   MOCK_IMPACT_METRICS,
-  MOCK_BIOGAS_METRIC,
   MOCK_BIOGAS_TREND,
   MOCK_SOCIAL_IMPACT_METRIC,
   MOCK_MILESTONES,
@@ -16,22 +15,22 @@ import {
 
 function Impact() {
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row h-full">
       <AppSideNav />
 
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4">
         <ImpactHero />
 
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Row 1: metric cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {MOCK_IMPACT_METRICS.map((metric) => (
             <MetricCard key={metric.id} {...metric} />
           ))}
         </div>
 
-      
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
+        {/* Row 2: methane trend + social impact */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="lg:col-span-2">
             <MethaneTrendCard
               title="Methane Avoided"
               subtitle="Climbing trend of biomethane captured from harvested hyacinth"
@@ -44,9 +43,9 @@ function Impact() {
           <SocialImpactCard {...MOCK_SOCIAL_IMPACT_METRIC} />
         </div>
 
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
+        {/* Row 3: project health + milestones */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="lg:col-span-2">
             <ProjectHealthMonitor />
           </div>
           <KeyMilestones

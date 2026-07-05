@@ -48,24 +48,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 font-bold text-2xl text-primary">
-            <img src="/logo.png" alt="ZiwaClear" className="rounded-full" width="40" height="40" />
+        <div className="text-center mb-6 md:mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 font-bold text-xl md:text-2xl text-primary">
+            <img src="/logo.png" alt="ZiwaClear" className="rounded-full" width="36" height="36" />
             ZiwaClear
           </Link>
-          <h1 className="text-xl font-bold mt-6">
+          <h1 className="text-lg md:text-xl font-bold mt-4 md:mt-6">
             {isSignup ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="text-muted text-sm mt-2">
+          <p className="text-muted text-xs md:text-sm mt-2">
             {isSignup
               ? "Join the marketplace and start trading biomass"
               : "Sign in to access your buyer dashboard"}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-tile border border-border-ui rounded-tile p-6 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="bg-tile border border-border-ui rounded-tile p-5 md:p-6 flex flex-col gap-4">
           {error && (
             <div className="bg-danger/10 border border-danger/30 text-danger text-sm rounded-input px-4 py-2">
               {error}
@@ -82,7 +82,7 @@ export default function LoginPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Jane Muthoni"
                 autoComplete="name"
-                className="w-full mt-1 bg-input border border-border-ui rounded-input px-4 py-2.5 text-sm
+                className="w-full mt-1 bg-input border border-border-ui rounded-input px-3 md:px-4 py-2.5 text-sm
                            focus:outline-none focus:ring-2 focus:ring-primary/40"
                 required
               />
@@ -98,7 +98,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="buyer@example.com"
               autoComplete="email"
-              className="w-full mt-1 bg-input border border-border-ui rounded-input px-4 py-2.5 text-sm
+              className="w-full mt-1 bg-input border border-border-ui rounded-input px-3 md:px-4 py-2.5 text-sm
                          focus:outline-none focus:ring-2 focus:ring-primary/40"
               required
             />
@@ -114,7 +114,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete={isSignup ? "new-password" : "current-password"}
-                className="w-full bg-input border border-border-ui rounded-input px-4 py-2.5 text-sm
+                className="w-full bg-input border border-border-ui rounded-input px-3 md:px-4 py-2.5 text-sm
                            focus:outline-none focus:ring-2 focus:ring-primary/40 pr-10"
                 required
               />

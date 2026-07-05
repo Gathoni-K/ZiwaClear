@@ -55,17 +55,18 @@ function ClaimedBatches() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row h-full">
       <AppSideNav />
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <h1 className="text-3xl font-bold">Claimed Batches</h1>
-        <p className="text-muted mt-1">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Claimed Batches</h1>
+        <p className="text-muted mt-1 text-sm md:text-base">
           Manage your active plastic collection commitments and logistics.
         </p>
 
-        <div className="flex gap-6 mt-6 items-start">
-          <div className="flex-1 flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 mt-4 md:mt-6 items-start">
+          {/* Batch cards */}
+          <div className="flex-1 flex flex-col gap-4 w-full">
             {isLoading && <p className="text-muted">Loading...</p>}
 
             {claimed && claimed.length === 0 && (
@@ -83,7 +84,8 @@ function ClaimedBatches() {
             ))}
           </div>
 
-          <div className="w-[340px] flex flex-col gap-4 shrink-0">
+          {/* Route + Payment panels — full width on mobile, fixed on desktop */}
+          <div className="w-full lg:w-[340px] flex flex-col gap-4 shrink-0">
             <RouteSuggestionPanel route={MOCK_ROUTE} />
             <PaymentSummaryPanel
               summary={MOCK_PAYMENT_SUMMARY}

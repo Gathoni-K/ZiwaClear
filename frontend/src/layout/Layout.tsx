@@ -9,7 +9,7 @@ export function Layout() {
     <ChatWidgetProvider>
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <LandingNav />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto min-h-0">
           <Outlet />
         </main>
         <LandingFooter />

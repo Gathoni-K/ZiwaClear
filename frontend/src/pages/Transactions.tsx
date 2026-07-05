@@ -11,27 +11,27 @@ import {
 
 function Transactions() {
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row h-full">
       <AppSideNav />
 
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-        <div className="flex items-start justify-between">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Wallet &amp; Transactions</h1>
-            <p className="text-muted mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold">Wallet &amp; Transactions</h1>
+            <p className="text-muted mt-1 text-sm md:text-base">
               Monitor your climate investments and track biomass acquisitions
               in real-time.
             </p>
           </div>
           <button
             type="button"
-            className="flex items-center gap-2 bg-primary text-background font-semibold text-sm px-4 py-2.5 rounded-pill hover:bg-primary-hover transition-colors shrink-0"
+            className="flex items-center gap-2 bg-primary text-background font-semibold text-sm px-4 py-2.5 rounded-pill hover:bg-primary-hover transition-colors shrink-0 self-start"
           >
             <Download size={16} /> Export Ledger
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {MOCK_TRANSACTION_SUMMARY.map((summary) => (
             <TransactionStatCard key={summary.label} {...summary} />
           ))}
