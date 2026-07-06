@@ -8,6 +8,7 @@ import Transactions from "./pages/Transactions";
 import Impact from "./pages/Impact";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
+import PublicImpact from "./pages/PublicImpact";
 import NotFound from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -32,6 +33,11 @@ export const router = createBrowserRouter([
     path: "/privacy",
     element: <Layout />,
     children: [{ index: true, element: <Privacy /> }],
+  },
+  {
+    path: "/impact",
+    element: <Layout />,
+    children: [{ index: true, element: <PublicImpact /> }],
   },
   { path: "*", element: <NotFound /> },
 ]);
