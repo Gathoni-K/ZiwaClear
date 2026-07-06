@@ -23,24 +23,24 @@ const CRISIS_STATS = [
 
 export function CrisisSection() {
   return (
-    <section id="crisis" className="px-8 py-20 max-w-6xl mx-auto">
-      <h2 className="text-3xl font-bold text-center">The Hyacinth Crisis</h2>
-      <p className="text-muted text-center mt-3 max-w-lg mx-auto">
+    <section id="crisis" className="px-4 md:px-8 py-16 md:py-20 max-w-6xl mx-auto">
+      <h2 className="text-2xl md:text-3xl font-bold text-center">The Hyacinth Crisis</h2>
+      <p className="text-muted text-center mt-3 max-w-lg mx-auto text-sm md:text-base">
         An invasive threat is choking Africa's largest freshwater lake,
         demanding an{" "}
         <span className="text-primary">industrial-scale intervention.</span>
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mt-8 md:mt-12">
         {CRISIS_STATS.map(({ icon: Icon, title, description }) => (
           <div
             key={title}
-            className="rounded-tile bg-tile border border-border-ui p-6"
+            className="rounded-tile bg-tile border border-border-ui p-5 md:p-6"
           >
             <span className="w-10 h-10 rounded-lg bg-danger/10 text-danger flex items-center justify-center">
               <Icon size={18} />
             </span>
-            <h3 className="font-bold text-lg mt-4">{title}</h3>
+            <h3 className="font-bold text-base md:text-lg mt-4">{title}</h3>
             <p className="text-sm text-muted mt-2 leading-relaxed">
               {description}
             </p>

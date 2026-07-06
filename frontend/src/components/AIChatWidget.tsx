@@ -6,10 +6,10 @@ export function AIChatWidget() {
   const { isOpen, toggle, close } = useChatWidget();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[1100] flex flex-col items-end gap-3 pointer-events-none">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[1100] flex flex-col items-end gap-3 pointer-events-none">
       {/* Slide-up panel */}
       <div
-        className={`w-[340px] h-[460px] rounded-tile bg-tile border border-border-ui shadow-2xl overflow-hidden
+        className={`w-[calc(100vw-32px)] max-w-[340px] h-[460px] max-h-[calc(100vh-120px)] rounded-tile bg-tile border border-border-ui shadow-2xl overflow-hidden
                     origin-bottom-right transition-all duration-200
                     ${isOpen
             ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
@@ -32,7 +32,7 @@ export function AIChatWidget() {
         </div>
       </div>
 
-      {/* Trigger button — always clickable even though the wrapper above it is not */}
+      {/* Trigger button */}
       <button
         type="button"
         onClick={toggle}
@@ -41,7 +41,7 @@ export function AIChatWidget() {
                    rounded-pill shadow-lg hover:bg-primary-hover transition-colors"
       >
         {isOpen ? <X size={18} /> : <Bot size={18} />}
-        {!isOpen && "Ask AI Assistant"}
+        <span className="hidden sm:inline">{!isOpen && "Ask AI Assistant"}</span>
       </button>
     </div>
   );
