@@ -61,7 +61,7 @@ export function ImpactHero() {
 
       <div className="relative z-10">
         <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold text-primary bg-primary/15 px-2 md:px-3 py-1 rounded-full">
-          <ShieldCheck size={12} className="md:size-[14px]" /> Impact Verified 2024
+          <ShieldCheck size={12} className="md:size-[14px]" /> Impact Verified 2026
         </span>
 
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mt-3 md:mt-4">

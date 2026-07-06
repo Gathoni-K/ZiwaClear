@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardMap } from "../components/DashboardMap";
 import { BatchDetailPanel } from "../components/BatchDetailPanel";
@@ -6,6 +7,7 @@ import { useBatches } from "../hooks/useBatches";
 import { useClaimBatch } from "../hooks/useClaimBatch";
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: batches } = useBatches();
@@ -13,12 +15,13 @@ function Dashboard() {
 
   const selectedBatch = batches?.find((b) => b.id === selectedBatchId) ?? null;
 
-  // Called from Sidebar card or Detail panel button
   function handleReserve(batchId: string) {
     // 1. Close the detail panel immediately
     setSelectedBatchId(null);
     // 2. Optimistic update the status to "claimed"
     claimMutation.mutate(batchId);
+    // 3. Redirect to Claimed Batches page
+    navigate("/dashboard/claimed-batches");
   }
 
   return (
