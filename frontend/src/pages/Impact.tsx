@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Waves, TreePine, Fish, Factory, Users } from "lucide-react";
+import { Waves, TreePine, Fish,} from "lucide-react";
 import { ImpactHero } from "../components/ImpactHero";
 import { MetricCard } from "../components/MetricCard";
 import { MethaneTrendCard } from "../components/MethaneTrendCard";

@@ -20,7 +20,7 @@ function ClaimedBatches() {
     if (!claimed || claimed.length === 0) {
       return { totalDistanceKm: 0, optimized: false, stops: [] };
     }
-    const stops = claimed.map((b: any, i: number) => ({
+    const stops = claimed.map((b: any,) => ({
       label: `${b.locationName} — ${b.quantityKg.toLocaleString()} kg`,
     }));
     // Rough distance estimate: ~25km between stops on average around Lake Victoria

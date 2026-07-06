@@ -1,5 +1,5 @@
-import fishImage from "../../assets/fishWaste.jpeg";
-import hyacinthImage from "../../assets/dryHyacinth.jpeg";
+import fishImage from "../../assets/fishWaste.jpg";
+import hyacinthImage from "../../assets/dryHyacinth.jpg";
 
 const VISION_CARDS = [
   {
