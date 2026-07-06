@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import type { Marker as LeafletMarker } from "leaflet";
 import "../lib/leafletIconFix";
 import { useBatches } from "../hooks/useBatches";
@@ -13,6 +14,22 @@ interface DashboardMapProps {
   onSelectBatch: (id: string) => void;
 }
 
+// Helper: coloured circle icon based on status
+function batchIcon(status: string, isSelected: boolean) {
+  const color = status === "claimed" ? "#9CA3AF" : "#2DD4BF";   // grey / teal
+  const size = isSelected ? 18 : 14;
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:${size}px;height:${size}px;
+      background:${color};
+      border:2px solid white;
+      border-radius:50%;
+      box-shadow:0 0 6px ${color}"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
 
 function SelectedMarkerSync({
   selectedBatchId,
@@ -42,14 +59,17 @@ export function DashboardMap({
 }: DashboardMapProps) {
   const { data: batches } = useBatches();
 
-  const geoBatches = batches?.filter(
+  // Show available AND claimed batches so we can display the grey "Dispatched" pin
+  const visibleBatches = batches?.filter(
     (b) =>
-      b.status === "available" && b.latitude != null && b.longitude != null
+      (b.status === "available" || b.status === "claimed") &&
+      b.latitude != null &&
+      b.longitude != null
   );
 
   const markerRefs = useRef<Map<string, LeafletMarker>>(new Map());
   const positions = new Map<string, [number, number]>(
-    geoBatches?.map((b) => [b.id, [b.latitude as number, b.longitude as number]]) ?? []
+    visibleBatches?.map((b) => [b.id, [b.latitude as number, b.longitude as number]]) ?? []
   );
 
   return (
@@ -68,10 +88,11 @@ export function DashboardMap({
         markerRefs={markerRefs}
         positions={positions}
       />
-      {geoBatches?.map((batch) => (
+      {visibleBatches?.map((batch) => (
         <Marker
           key={batch.id}
           position={[batch.latitude as number, batch.longitude as number]}
+          icon={batchIcon(batch.status, batch.id === selectedBatchId)}
           ref={(ref) => {
             if (ref) markerRefs.current.set(batch.id, ref);
             else markerRefs.current.delete(batch.id);
@@ -85,7 +106,8 @@ export function DashboardMap({
               <p className="font-bold">{batch.quantityKg.toLocaleString()} kg</p>
               <p>{batch.locationName}</p>
               <p className="text-xs text-gray-500">
-                {batch.qualityRating != null ? `★ ${batch.qualityRating}/5 · ` : ""}
+                {batch.status === "claimed" ? "Dispatched" : `★ ${batch.qualityRating ?? "—"}/5`}
+                {" · "}
                 {timeAgo(batch.collectedAt ?? batch.createdAt)}
               </p>
             </div>
