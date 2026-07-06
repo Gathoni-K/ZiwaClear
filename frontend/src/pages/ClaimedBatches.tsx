@@ -20,7 +20,9 @@ function ClaimedBatches() {
     if (!claimed || claimed.length === 0) {
       return { totalDistanceKm: 0, optimized: false, stops: [] };
     }
-    const stops = claimed.map((b: any,) => ({
+
+    const stops = claimed.map((b: any) => ({
+
       label: `${b.locationName} — ${b.quantityKg.toLocaleString()} kg`,
     }));
     // Rough distance estimate: ~25km between stops on average around Lake Victoria
@@ -99,11 +101,10 @@ function ClaimedBatches() {
           <button
             type="button"
             onClick={() => setActiveTab("claimed")}
-            className={`px-4 py-1.5 rounded-pill text-sm font-medium transition-colors ${
-              activeTab === "claimed"
+            className={`px-4 py-1.5 rounded-pill text-sm font-medium transition-colors ${activeTab === "claimed"
                 ? "bg-primary text-background"
                 : "text-muted hover:text-foreground"
-            }`}
+              }`}
           >
             Claimed
             {claimed?.length > 0 && (
@@ -113,11 +114,10 @@ function ClaimedBatches() {
           <button
             type="button"
             onClick={() => setActiveTab("collected")}
-            className={`px-4 py-1.5 rounded-pill text-sm font-medium transition-colors ${
-              activeTab === "collected"
+            className={`px-4 py-1.5 rounded-pill text-sm font-medium transition-colors ${activeTab === "collected"
                 ? "bg-primary text-background"
                 : "text-muted hover:text-foreground"
-            }`}
+              }`}
           >
             Collected
             {collected?.length > 0 && (

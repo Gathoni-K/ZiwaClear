@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Waves, TreePine, Fish,} from "lucide-react";
+import { Waves, TreePine, Fish } from "lucide-react";
 import { ImpactHero } from "../components/ImpactHero";
 import { MetricCard } from "../components/MetricCard";
 import { MethaneTrendCard } from "../components/MethaneTrendCard";
@@ -28,30 +28,30 @@ function Impact() {
 
   const liveMetrics: ImpactMetric[] = impact
     ? [
-        {
-          id: "1",
-          icon: Waves,
-          label: "Surface Restored",
-          value: `${impact.lakeAreaClearedM2?.toLocaleString() ?? "0"} m²`,
-          description: "Lake area cleared of hyacinth",
-          trend: "up",
-        },
-        {
-          id: "2",
-          icon: TreePine,
-          label: "Carbon Offset",
-          value: `${impact.co2eAvoidedTonnes?.toLocaleString() ?? "0"} tCO₂e`,
-          description: "Methane emissions avoided",
-          badge: "Certified",
-        },
-        {
-          id: "3",
-          icon: Fish,
-          label: "Biomass Harvested",
-          value: `${impact.totalTonnes?.toLocaleString() ?? "0"} tonnes`,
-          description: "Total water hyacinth removed from the lake",
-        },
-      ]
+      {
+        id: "1",
+        icon: Waves,
+        label: "Surface Restored",
+        value: `${impact.lakeAreaClearedM2?.toLocaleString() ?? "0"} m²`,
+        description: "Lake area cleared of hyacinth",
+        trend: "up",
+      },
+      {
+        id: "2",
+        icon: TreePine,
+        label: "Carbon Offset",
+        value: `${impact.co2eAvoidedTonnes?.toLocaleString() ?? "0"} tCO₂e`,
+        description: "Methane emissions avoided",
+        badge: "Certified",
+      },
+      {
+        id: "3",
+        icon: Fish,
+        label: "Biomass Harvested",
+        value: `${impact.totalTonnes?.toLocaleString() ?? "0"} tonnes`,
+        description: "Total water hyacinth removed from the lake",
+      },
+    ]
     : [];
 
   // Methane card with live total
@@ -76,18 +76,18 @@ function Impact() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {isLoading
             ? [1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-tile bg-tile border border-border-ui p-5 animate-pulse"
-                >
-                  <div className="h-10 w-10 bg-border-ui rounded-lg" />
-                  <div className="h-4 w-1/2 bg-border-ui rounded mt-4" />
-                  <div className="h-6 w-2/3 bg-border-ui rounded mt-1" />
-                </div>
-              ))
+              <div
+                key={i}
+                className="rounded-tile bg-tile border border-border-ui p-5 animate-pulse"
+              >
+                <div className="h-10 w-10 bg-border-ui rounded-lg" />
+                <div className="h-4 w-1/2 bg-border-ui rounded mt-4" />
+                <div className="h-6 w-2/3 bg-border-ui rounded mt-1" />
+              </div>
+            ))
             : liveMetrics.map((metric) => (
-                <MetricCard key={metric.id} {...metric} />
-              ))}
+              <MetricCard key={metric.id} {...metric} />
+            ))}
         </div>
 
         {/* Row 2: methane trend + social impact */}
