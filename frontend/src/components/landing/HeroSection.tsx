@@ -10,12 +10,7 @@ export function HeroSection() {
     <section className="px-4 md:px-8 py-12 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center max-w-6xl mx-auto">
       {/* Left: text */}
       <div className="order-1">
-        <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary border border-primary/30 bg-primary/10 px-3 py-1 rounded-full mb-4 md:mb-6">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          Restoring Lake Victoria
-        </span>
-
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
           Turning an Ecological{" "}
           <span className="text-primary">Crisis</span>
           <br />
