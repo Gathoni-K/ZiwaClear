@@ -10,7 +10,7 @@ import { api } from "../api/config";
 import type { Batch } from "../types/batch";
 import type { Transaction, TransactionSummary } from "../types/transactions";
 
-const ITEMS_PER_PAGE = 10;
+
 
 function batchToTransaction(b: Batch, pricePerKg: number): Transaction {
   return {
