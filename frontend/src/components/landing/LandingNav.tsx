@@ -19,9 +19,8 @@ export function LandingNav() {
         { to: "/dashboard/impact", label: "Impact" },
       ]
     : [
-        { to: "#crisis", label: "The Crisis" },
-        { to: "#solution", label: "Our Solution" },
-        { to: "#vision", label: "Future Vision" },
+                { to: "/about", label: "About" },
+       { to: "/impact", label: "Impact" },
       ];
 
   return (
