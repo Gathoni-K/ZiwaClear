@@ -52,7 +52,7 @@ function Dashboard() {
       </div>
 
       {/* Map */}
-      <div className="flex-1 relative min-h-[400px] lg:min-h-0">
+      <div className="flex-1 relative h-[60vh] lg:h-auto">
         <DashboardMap
           selectedBatchId={selectedBatchId}
           onSelectBatch={setSelectedBatchId}
