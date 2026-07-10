@@ -49,7 +49,7 @@ export function ChatPanel() {
     try {
       // Send all messages so the AI has full conversation context
       const allMessages = [...messages, userMessage];
-      
+
       await streamChatResponse(allMessages, (chunkSoFar) => {
         setMessages((prev) =>
           prev.map((m) =>
@@ -58,6 +58,7 @@ export function ChatPanel() {
         );
       });
     } catch (error) {
+      console.error("Chat stream error:", error);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
