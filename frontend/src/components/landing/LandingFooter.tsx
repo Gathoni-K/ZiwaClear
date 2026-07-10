@@ -28,11 +28,15 @@ export function LandingFooter() {
         <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 md:gap-8 mt-6 text-sm text-muted">
           <span className="flex items-center gap-2">
             <Mail size={15} className="text-primary shrink-0" />
-            hello@ziwaclear.com
+                        <a href="mailto:ziwaclear.ke@gmail.com" className="hover:text-primary transition-colors">
+              ziwaclear.ke@gmail.com
+            </a>
           </span>
           <span className="flex items-center gap-2">
             <Phone size={15} className="text-primary shrink-0" />
-            +254 (0) 700 123 456
+                        <a href="tel:+254768690493" className="hover:text-primary transition-colors">
+              +254 (0) 76 869 0493
+            </a>
           </span>
           <span className="flex items-center gap-2">
             <MapPin size={15} className="text-primary shrink-0" />
