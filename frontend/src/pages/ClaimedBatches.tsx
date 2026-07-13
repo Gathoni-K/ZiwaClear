@@ -6,6 +6,7 @@ import { PaymentSummaryPanel } from "../components/PaymentSummaryPanel";
 import { AppSideNav } from "../components/AppSideNav";
 import { api } from "../api/config";
 import type { RouteSuggestion, PaymentSummary } from "../types/logistics";
+import { toast } from "../components/Toast";
 
 function ClaimedBatches() {
   const [activeTab, setActiveTab] = useState<"claimed" | "collected">("claimed");
@@ -59,18 +60,19 @@ function ClaimedBatches() {
     };
   }, [claimed]);
 
-  async function handleConfirmCollection(batch: { id: string }) {
+   async function handleConfirmCollection(batch: { id: string }) {
     try {
       await api.batches.collect(batch.id);
+      toast("Collection confirmed!", "success");
       refetch?.();
     } catch (error) {
-      alert("Could not confirm collection. Please try again.");
+      toast("Could not confirm collection. Please try again.", "error");
     }
   }
 
   async function handleCompleteTransaction() {
     if (!claimed || claimed.length === 0) {
-      alert("No batches to complete.");
+      toast("No batches to complete.", "info");
       return;
     }
 
@@ -78,11 +80,11 @@ function ClaimedBatches() {
       for (const batch of claimed) {
         await api.batches.collect(batch.id);
       }
-      alert("All batches collected successfully!");
+      toast("All batches collected successfully!", "success");
       setActiveTab("collected");
       refetch?.();
     } catch (error) {
-      alert("Could not complete all transactions. Please try again.");
+      toast("Could not complete all transactions. Please try again.", "error");
     }
   }
 

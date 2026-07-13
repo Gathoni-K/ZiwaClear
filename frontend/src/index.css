@@ -63,3 +63,14 @@ html {
 
 /* 3. Enable class-based dark mode variant for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/config";
 import type { Batch } from "../types/batch";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "../components/Toast";
 
 export function useClaimBatch() {
   const queryClient = useQueryClient();
@@ -9,7 +10,6 @@ export function useClaimBatch() {
 
   return useMutation({
     mutationFn: (batchId: string) => {
-        console.log("Claiming batch:", batchId, "buyer:", buyer);
       if (!buyer?.id) throw new Error("Not authenticated");
       return api.batches.claim(batchId, buyer.id);
     },
@@ -29,10 +29,15 @@ export function useClaimBatch() {
       return { previous };
     },
 
+    onSuccess: () => {
+      toast("Batch claimed successfully!", "success");
+    },
+
     onError: (_err, _id, context) => {
       if (context?.previous) {
         queryClient.setQueryData(["batches"], context.previous);
       }
+      toast("Failed to claim batch. Please try again.", "error");
     },
 
     onSettled: () => {
