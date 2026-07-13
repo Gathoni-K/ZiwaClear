@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardMap } from "../components/DashboardMap";
 import { BatchDetailPanel } from "../components/BatchDetailPanel";
+import { BeachDetailSidebar } from "../components/BeachDetailSidebar";
 import { useBatches } from "../hooks/useBatches";
 import { useClaimBatch } from "../hooks/useClaimBatch";
+import { useActiveBeach } from "../context/ActiveBeachContext";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -12,15 +14,20 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: batches } = useBatches();
   const claimMutation = useClaimBatch();
+  const { setActiveBeach } = useActiveBeach();
 
   const selectedBatch = batches?.find((b) => b.id === selectedBatchId) ?? null;
 
+  function handleSelectBatch(id: string) {
+    setSelectedBatchId(id);
+    const batch = batches?.find((b) => b.id === id) ?? null;
+    setActiveBeach(batch);
+  }
+
   function handleReserve(batchId: string) {
-    // 1. Close the detail panel immediately
     setSelectedBatchId(null);
-    // 2. Optimistic update the status to "claimed"
+    setActiveBeach(null);
     claimMutation.mutate(batchId);
-    // 3. Redirect to Claimed Batches page
     navigate("/dashboard/claimed-batches");
   }
 
@@ -44,7 +51,7 @@ function Dashboard() {
         <Sidebar
           selectedBatchId={selectedBatchId}
           onSelectBatch={(id) => {
-            setSelectedBatchId(id);
+            handleSelectBatch(id);
             setSidebarOpen(false);
           }}
           onReserve={handleReserve}
@@ -52,20 +59,26 @@ function Dashboard() {
       </div>
 
       {/* Map */}
-      <div className="flex-1 relative h-[60vh] lg:h-auto">
+      <div className="flex-1 relative min-h-[400px] lg:min-h-0">
         <DashboardMap
           selectedBatchId={selectedBatchId}
-          onSelectBatch={setSelectedBatchId}
+          onSelectBatch={handleSelectBatch}
         />
 
         {selectedBatch && (
           <BatchDetailPanel
             batch={selectedBatch}
-            onClose={() => setSelectedBatchId(null)}
+            onClose={() => {
+              setSelectedBatchId(null);
+              setActiveBeach(null);
+            }}
             onReserve={handleReserve}
           />
         )}
       </div>
+
+      {/* Right edge beach detail panel */}
+      <BeachDetailSidebar />
     </div>
   );
 }
