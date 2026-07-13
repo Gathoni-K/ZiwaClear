@@ -1,0 +1,202 @@
+# SMS Parser Upgrade — Change Map
+
+**Scope:** Adding quality classification and density-based urgency scoring to the water hyacinth SMS/WhatsApp parsing pipeline.
+
+This document maps every file touched, what existed before, what changed, why, and how the pieces connect. Read it top to bottom for the full picture, or jump to a file section if you just need to re-orient on one piece.
+
+---
+
+## 1. The problem we were solving
+
+The original parser (`smsParserSchema.ts` + inline prompt + `getPartialExtraction`) only extracted `location`, `quantity_kg`, `unit`, `additional_notes`, and `confidence_score`. It had two gaps relative to what the system is actually supposed to do:
+
+1. It couldn't tell you the **condition** of the reported hyacinth (fresh, dry, mixed, decomposed).
+2. It had no concept of **urgency** — which locations have the most hyacinth buildup and should be prioritized for harvesting.
+
+Underneath that, there was also a design risk worth flagging up front: it's tempting to just ask the LLM to output `urgency_score` or `quantity_kg` directly from vague descriptions ("truckload", "boti imejaa"). We deliberately avoided that. LLMs are unreliable at consistent arithmetic and inconsistent about what counts as "high" urgency. Instead, the LLM's job was narrowed to **structured extraction only**, and all arithmetic/thresholding was moved into **deterministic, testable code**. That single decision shapes almost every file below.
+
+---
+
+## 2. High-level architecture (before → after)
+
+**Before:**
+```
+SMS message → LLM (schema-bound) → ParsedSMSData → smsService.ts
+                     ↓ (on failure)
+              getPartialExtraction() → cast as ParsedSMSData
+```
+Single schema did double duty: it was both what the LLM was asked to produce *and* the final stored record. `quantity_kg` was taken directly from whatever the LLM said.
+
+**After:**
+```
+SMS message → LLM (llmExtractionSchema-bound) → LLMExtraction
+                     ↓ (on failure)
+              getPartialExtraction() → LLMExtraction
+                     ↓ (both paths converge here)
+              finalizeResult(): 
+                 resolveQuantityKg()   [unitReference.ts]
+                 computeUrgencyLevel() [urgencyRules.ts]
+                     ↓
+              ParsedSMSData (smsParserSchema) → smsService.ts
+```
+Two schemas now exist on purpose: `llmExtractionSchema` (what the model is allowed to say) and `smsParserSchema` (the full, final record — a superset). `quantity_kg` and `urgency_level` are **never** written by the LLM or the fallback; they're computed in one place (`finalizeResult`) that both paths pass through, so behavior is consistent regardless of which path produced the data.
+
+---
+
+## 3. File-by-file map
+
+### `src/parser/parserSchema.ts`
+**Before:** One flat schema (`smsParserSchema`) with `location`, `quantity_kg`, `unit`, `additional_notes`, `confidence_score`, `extracted_at`. This schema was handed directly to `withStructuredOutput()`, meaning the LLM was trusted to fill *every* field, including the ones that should've been computed.
+
+**After:** Split into three schemas:
+- `scaleEstimateSchema` — new. Represents *how* a quantity was reported: either a direct kg figure (`scale_type: "direct_kg"`) or a local unit + count (e.g. `scale_type: "mtumbwi", raw_value: 1`). This is the LLM's actual arithmetic-free contribution to quantity.
+- `llmExtractionSchema` — new. Everything the LLM (or the fallback) is allowed to produce: `location_raw`, `location`, `scale_estimate`, `quality`, `impact_tags`, `summary`, `additional_notes`, `confidence_score`. Notably **excludes** `quantity_kg` and `urgency_level`.
+- `smsParserSchema` — now `llmExtractionSchema.extend({...})`, adding `quantity_kg`, `quantity_estimated`, `unit`, `urgency_level`, `extracted_at` — the fields only ever set by code, after the LLM/fallback step.
+
+**Why:** This is the structural fix that makes the "don't trust the LLM with arithmetic or thresholds" decision enforceable at the type level, not just a prompt-level suggestion. `withStructuredOutput(llmExtractionSchema)` now makes it *impossible* for the model to hallucinate a `quantity_kg` or `urgency_level` field — it's not in the schema it's constrained to.
+
+**New fields and why each exists:**
+| Field | Type | Purpose |
+|---|---|---|
+| `location_raw` | string \| null | Exactly what the sender wrote, before normalization — kept for auditing normalization drift over time. |
+| `location` | string \| null | Normalized canonical site name (currently: "Dunga"; extendable). |
+| `quality` | enum: fresh/dry/mixed/decomposed \| null | Condition of the reported hyacinth. |
+| `impact_tags` | array of enum | Socioeconomic impact flags (navigation_blockage, fishing_disruption, water_intake_blockage, health_risk, livelihood_impact). |
+| `summary` | string \| null | Clean English sentence for the frontend sidebar. |
+| `quantity_estimated` | boolean | True if kg was derived from a unit conversion rather than a directly stated figure — lets downstream consumers gauge precision. |
+| `urgency_level` | enum: low/medium/high \| null | Computed priority signal — never LLM-authored. |
+
+---
+
+### `src/parser/unitReference.ts` (new file)
+**Before:** Didn't exist. There was no way to convert local transport-unit language ("gunia," "mkokoteni," "fuso") into kilograms.
+
+**After:** Contains:
+- `UNIT_KG_BASELINE` — the direct kg-per-unit lookup table, taken from your reference data:
+
+  | Unit | kg |
+  |---|---|
+  | gunia (sack) | 30 |
+  | toroli (wheelbarrow) | 40 |
+  | mkokoteni (handcart) | 250 |
+  | mtumbwi (small boat) | 500 |
+  | sese (large boat) | 1500 |
+  | pickup | 800 |
+  | canter (light truck) | 2500 |
+  | fuso (large truck) | 6000 |
+
+- `UNIT_ALIASES` — maps the many Sheng/Swahili/English spellings and synonyms (e.g. "magunia," "sitoro," "boti ndogo," "lorry kubwa") to one canonical `LocalUnit` key.
+- `estimateKgFromUnit(unit, count)` — pure function: `UNIT_KG_BASELINE[unit] * count`.
+- `resolveUnitAlias(term)` — normalizes a raw matched word/phrase to a `LocalUnit`, or `null` if unrecognized.
+
+**Why:** This is the "40kg/m² arithmetic" requirement, but implemented as a direct kg lookup (informed by, and consistent with, the fuller volumetric/area reference table you provided) rather than recomputing area × density every time. A lookup table is less error-prone and easier to adjust as real-world reference sizes get refined. Isolating it in its own file means the LLM never touches this math — the LLM only ever says "1 mtumbwi," and this file is solely responsible for turning that into 500kg.
+
+---
+
+### `src/parser/urgencyRules.ts` (new file)
+**Before:** Didn't exist. No urgency concept at all.
+
+**After:**
+```typescript
+computeUrgencyLevel(kg: number | null): "low" | "medium" | "high" | null
+```
+Thresholds (confirmed by you):
+- `>= 1000kg` → `"high"`
+- `>= 300kg` → `"medium"`
+- else → `"low"`
+- `null` in → `null` out (no data, no guess)
+
+**Why:** Urgency here means "how much hyacinth is piled up, so we know where to send harvesters first" — not emotional urgency in the message text. Since you already have a hard kg number by the time this runs, urgency is a deterministic classification of that number, not something requiring language understanding. Keeping it as a tiny pure function makes the thresholds a one-line change if they need tuning later, and makes it trivially unit-testable.
+
+---
+
+### `src/parser/parserPrompts.ts`
+**Before:** A single prompt asking for `location`, `quantity_kg`, `unit`, `additional_notes`, `confidence_score`, with six few-shot examples all in direct-kg form ("100kg Dunga," "500kg Usenge," etc.). No handling of local transport units, quality, or impact tags.
+
+**After:** Rewritten to:
+- Explicitly forbid arithmetic and urgency assignment: *"do not do arithmetic, do not assign urgency, do not invent kg totals from visual descriptions."*
+- Ask for `location_raw` + `location` (with normalization instructions and the canonical site list, currently just "Dunga").
+- Ask for `scale_estimate` as either `direct_kg` or one of the eight local unit keys + count — explicitly listing the unit reference table inline so the model recognizes the terms (but is told not to multiply them itself).
+- Ask for `quality`, `impact_tags`, `summary`, `additional_notes`, `confidence_score`.
+- New few-shot examples covering local-unit scenarios: a full small boat ("mtumbwi") with a navigation-blockage tag, a dry sack count ("magunia 5 kavu"), and a full large truck ("fuso") with two impact tags.
+
+**Why:** The prompt is the enforcement layer for "the LLM extracts language, the code does math." Without explicit "do not do arithmetic" instructions and matching examples, models tend to attempt the conversion themselves inconsistently. The examples were chosen to cover: direct kg, a unit-based estimate, a quality tag, and multiple impact tags simultaneously, so the model has a template for each field combination it'll actually see in production traffic.
+
+---
+
+### `src/parser/parserFallback.ts`
+**Before:**
+```typescript
+getPartialExtraction(message): Partial<ParsedSMSData>
+```
+Detected: five hardcoded location keywords, and a direct-kg regex (`/(\d+)\s*(?:kg|kilos?|kilograms?)/`). Did not detect quality, local units, or impact tags. Returned a loosely-typed `Partial<ParsedSMSData>` that was later force-cast (`as ParsedSMSData`) in the parser without going through schema validation — meaning defaults (`unit`, `extracted_at`, etc.) weren't guaranteed on the fallback path.
+
+**After:**
+```typescript
+getPartialExtraction(message): LLMExtraction
+```
+Added:
+- `QUALITY_KEYWORDS` lookup + `detectQuality()` — matches "kavu"→dry, "mbichi"/"mpya"→fresh, "imeoza"/"imeozea"/"rotten"→decomposed, "mchanganyiko"/"mixed"→mixed. First match wins.
+- A local-unit regex (`/(\d+)\s*(gunia|magunia|toroli|...)/`) that runs when the direct-kg regex doesn't match, resolved through `resolveUnitAlias()` from `unitReference.ts`.
+- Basic impact tag detection: "imeziba"/"blocked" → `navigation_blockage`.
+- Return type changed from `Partial<ParsedSMSData>` to `LLMExtraction` — it no longer tries to guess `quantity_kg` directly; like the LLM path, it only produces `scale_estimate`, letting `finalizeResult()` do the conversion. This closes the "silent cast" bug — the fallback now flows through the exact same validation and computation path as a successful LLM call.
+
+`CircuitBreaker` class: **unchanged**, copied over as-is.
+
+**Why:** The fallback exists so degraded service (LLM timeout, circuit breaker open, malformed model output) still produces something useful instead of nulling out everything. Adding quality and unit detection here means a failed LLM call still gives you a reasonable quality/urgency estimate instead of silently losing that signal — matching the reliability bar the LLM path has.
+
+**Known gap, called out on purpose:** the regex-based fallback only catches spelling variants explicitly listed. A new slang term or misspelling the LLM might've handled gracefully will silently return `null` on this path. This is an accepted tradeoff of a regex fallback vs. an LLM — flagged here so it doesn't look like a bug later if you see fallback-parsed messages with more nulls than LLM-parsed ones.
+
+---
+
+### `src/parser/smsParser.ts` (the `LangchainSMSParser` class)
+**Before:**
+```typescript
+const structuredLlm = this.llm.withStructuredOutput(smsParserSchema);
+```
+LLM was schema-bound to the *entire* final record, including `quantity_kg` — meaning the model itself was expected to do the truckload/area → kg arithmetic. Fallback path did `getPartialExtraction(message) as ParsedSMSData` — an unchecked cast, no schema validation, no urgency, no unit conversion.
+
+**After:**
+- LLM is now schema-bound to `llmExtractionSchema` only — it literally cannot produce `quantity_kg` or `urgency_level`, they're not in the schema it's constrained to.
+- New `resolveQuantityKg(scale)` — reads the model's `scale_estimate`, returns `{kg, estimated}`: direct passthrough for `direct_kg`, or `estimateKgFromUnit()` for a local unit.
+- New `finalizeResult(llmData: LLMExtraction): ParsedSMSData` — the single convergence point. Takes either the LLM's output or the fallback's output, resolves kg, computes urgency via `computeUrgencyLevel()`, sets `extracted_at`, and runs everything through `smsParserSchema.parse()` (enforcing defaults and full validation) before returning.
+- Both the success path and the catch-block fallback path now call `finalizeResult()` — previously the fallback path bypassed schema validation entirely.
+- **Bug fix (from your screenshot):** `chain.invoke({ message })` returns a LangChain-inferred type that doesn't line up cleanly with a stricter `ReturnType<typeof llmExtractionSchema.parse>` annotation, throwing a TS error on `finalizeResult(result)`. Fixed by explicitly re-parsing: `const normalized = llmExtractionSchema.parse(rawResult); finalizeResult(normalized);` — this both satisfies TypeScript and guarantees runtime validation of whatever LangChain handed back, rather than trusting its inferred type blindly.
+- Caching (`cache.set`/`cache.get`, 1hr TTL) — unchanged in behavior, now caches the fully finalized (post-computation) result rather than a possibly-incomplete LLM result.
+
+**Why:** This file is where the "LLM extracts, code computes" split is actually executed. Centralizing the kg-resolution and urgency-computation into one `finalizeResult()` function — called from exactly two places (success, and catch) — guarantees you can never end up with a result where quantity/urgency were computed differently depending on which path produced the underlying extraction.
+
+---
+
+### `src/services/smsService.ts`
+**Before:** Read `parsedData.location` and `parsedData.quantity_kg` via loose `(parsedData as any).x` casts (defensive, since the old schema's shape wasn't fully trusted). No use of `quality`, `urgency_level`, or `impact_tags` — those fields didn't exist yet.
+
+**After:**
+- Imports the real `ParsedSMSData` type instead of relying on `any` casts — `parsedData.location`, `parsedData.quantity_kg`, `parsedData.urgency_level` are now typed and safe to read directly.
+- Added (currently commented out, pending your confirmation of the beach-status/broadcast mechanism):
+  ```typescript
+  // if (beachId && urgencyLevel) {
+  //     await beachStateEngine.updateBeachStatus(beachId, urgencyLevel, parsedData.impact_tags);
+  //     if (urgencyLevel === "high") {
+  //         await beachStateEngine.notifyEarlyActionNetworks(parsedData, beachId);
+  //     }
+  // }
+  ```
+- Everything else (duplicate detection, `sms` record insert/update, `batchService.createBatchFromSMS` call, `getById`, `listSMS`) — **unchanged**.
+
+**Why:** This is the integration point where urgency should eventually trigger the "flashing map alert" + outbound SMS broadcast to FlexiBiogas/youth networks you described. It's stubbed rather than implemented because the actual beach-status storage mechanism (DB column + polling? websocket push? job queue?) and outbound SMS provider haven't been confirmed yet — implementing it now would mean guessing at infrastructure that doesn't exist yet in what you've shared. This is the one open thread in the whole map.
+
+---
+
+## 4. What's fully working right now
+
+- **Quality extraction:** LLM path — fully prompted and schema-enforced. Fallback path — keyword-based, covers the primary Swahili/Sheng terms for fresh/dry/decomposed/mixed.
+- **Urgency assignment:** Fully deterministic, both paths converge on the same `computeUrgencyLevel()` logic, driven by your confirmed kg thresholds.
+- **Unit conversion:** All 8 local units (gunia through fuso) map to kg via your confirmed reference table, with alias handling for spelling variants.
+- **Impact tags:** Basic detection (navigation_blockage keyword match) — LLM path also extracts the full 5-tag taxonomy from context, not just this one keyword.
+
+## 5. What's still open
+
+1. **Beach state engine / map alerts / outbound SMS broadcast** — not implemented, stubbed in `smsService.ts`. Needs: how beach status is stored/pushed to frontend, and what SMS provider sends outbound alerts (you used Africa's Talking on ZiwaClear — confirm if that's reused here).
+2. **Fallback regex brittleness** — new slang/misspellings not in the keyword lists will silently return `null` for quality/units on the fallback path only (LLM path is more robust to this by nature).
+3. **Canonical site list** — currently only "Dunga" is a confirmed canonical name; other locations (Usenge, Kendu Bay, etc.) are handled as-is without a true normalization authority list. Worth expanding as more sites come online.

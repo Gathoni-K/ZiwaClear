@@ -11,6 +11,7 @@ batchRouter.get("/all", batchController.list);
 batchRouter.get("/impact", batchController.getImpact);
 batchRouter.get("/price", batchController.getPrice);
 batchRouter.get("/:id", batchController.getById);
+batchRouter.get("/impact/trend", batchController.getImpactTrend);
 
 // Action routes
 batchRouter.post("/:id/claim", validateRequest(claimBatchValidator), batchController.claim);
