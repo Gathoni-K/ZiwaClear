@@ -3,6 +3,7 @@ import { db } from "../db";
 import { sms, beaches } from "../db/schema";
 import { smsParser } from "./sms/smsParser";
 import { batchService } from "./batchService";
+import { ParsedSMSData } from "./sms/parser/parserSchema";
 
 export class SMSService {
     public async processIncomingSMS(rawMessage: string, senderPhone: string) {
@@ -26,9 +27,11 @@ export class SMSService {
         }
 
         try {
-            const parsedData = await smsParser.parseSMS(rawMessage);
+            const parsedData: ParsedSMSData = await smsParser.parseSMS(rawMessage);
 
-            const locationName: string | null = (parsedData as any).location || (parsedData as any).beach_name || null;
+            const locationName: string | null = parsedData.location ?? null;
+            const quantityKg: number | null = parsedData.quantity_kg ?? null;
+            const urgencyLevel = parsedData.urgency_level ?? null;
 
             let beachId: number | null = null;
             if (locationName) {
@@ -45,7 +48,14 @@ export class SMSService {
                 parseError: null
             }).where(eq(sms.id, smsRecord.id));
 
-            const quantityKg: number | null = (parsedData as any).quantity_kg || null;
+            // TODO: wire to real beach status engine once storage/broadcast
+            // mechanism (websocket, DB column + polling, queue job, etc.) is confirmed.
+            // if (beachId && urgencyLevel) {
+            //     await beachStateEngine.updateBeachStatus(beachId, urgencyLevel, parsedData.impact_tags);
+            //     if (urgencyLevel === "high") {
+            //         await beachStateEngine.notifyEarlyActionNetworks(parsedData, beachId);
+            //     }
+            // }
 
             if (quantityKg && locationName) {
                 const batch = await batchService.createBatchFromSMS({
