@@ -1,14 +1,40 @@
-import { ParsedSMSData } from "./parserSchema";
+import { LLMExtraction } from "./parserSchema";
+import { resolveUnitAlias } from "./unitReference";
 
-export function getPartialExtraction(message: string): Partial<ParsedSMSData> {
+const QUALITY_KEYWORDS: Record<string, "fresh" | "dry" | "mixed" | "decomposed"> = {
+    kavu: "dry",
+    dry: "dry",
+    mbichi: "fresh",
+    fresh: "fresh",
+    "mpya": "fresh",
+    imeoza: "decomposed",
+    "imeozea": "decomposed",
+    rotten: "decomposed",
+    decomposed: "decomposed",
+    mchanganyiko: "mixed",
+    mixed: "mixed",
+};
+
+function detectQuality(lowerMessage: string): "fresh" | "dry" | "mixed" | "decomposed" | null {
+    for (const [keyword, quality] of Object.entries(QUALITY_KEYWORDS)) {
+        if (lowerMessage.includes(keyword)) {
+            return quality;
+        }
+    }
+    return null;
+}
+
+export function getPartialExtraction(message: string): LLMExtraction {
     const lowerMessage = message.toLowerCase();
-    const partialData: Partial<ParsedSMSData> = {
+    const partialData: LLMExtraction = {
+        location_raw: null,
         location: null,
-        quantity_kg: null,
-        unit: "kg",
+        scale_estimate: null,
+        quality: null,
+        impact_tags: [],
+        summary: null,
         additional_notes: message.substring(0, 50),
         confidence_score: 0.1,
-        extracted_at: new Date().toISOString()
     };
 
     if (lowerMessage.includes("dunga")) partialData.location = "Dunga";
@@ -18,9 +44,24 @@ export function getPartialExtraction(message: string): Partial<ParsedSMSData> {
     else if (lowerMessage.includes("muhuru")) partialData.location = "Muhuru Bay";
 
     const kgMatch = lowerMessage.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos?|kilograms?)/);
-
     if (kgMatch) {
-        partialData.quantity_kg = parseFloat(kgMatch[1]!);
+        partialData.scale_estimate = { scale_type: "direct_kg", raw_value: parseFloat(kgMatch[1]!) };
+    } else {
+        const unitMatch = lowerMessage.match(
+            /(\d+)\s*(gunia|magunia|toroli|sitoro|mkokoteni|mtumbwi|sese|pickup|pick-up|canter|fuso|lorry)/
+        );
+        if (unitMatch) {
+            const unit = resolveUnitAlias(unitMatch[2]!);
+            if (unit) {
+                partialData.scale_estimate = { scale_type: unit, raw_value: parseFloat(unitMatch[1]!) };
+            }
+        }
+    }
+
+    partialData.quality = detectQuality(lowerMessage);
+
+    if (lowerMessage.includes("imeziba") || lowerMessage.includes("blocked")) {
+        partialData.impact_tags = [...partialData.impact_tags, "navigation_blockage"];
     }
 
     return partialData;

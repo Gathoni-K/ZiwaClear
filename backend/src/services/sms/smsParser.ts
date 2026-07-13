@@ -1,10 +1,29 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { extractionPromptTemplate } from "./parserPrompts";
-import { ParsedSMSData, smsParserSchema } from "./parserSchema";
-import { CircuitBreaker, getPartialExtraction } from "./parserFallback";
+import { extractionPromptTemplate } from "./parser/parserPrompts";
+import { ParsedSMSData, LLMExtraction, llmExtractionSchema, smsParserSchema, ScaleEstimate } from "./parser/parserSchema";
+import { CircuitBreaker, getPartialExtraction } from "./parser/parserFallback";
+import { estimateKgFromUnit } from "./parser/unitReference";
+import { computeUrgencyLevel } from "./parser/urgencyRules";
 
 const circuitBreaker = new CircuitBreaker(5, 60000);
 const cache = new Map<string, { data: ParsedSMSData; timestamp: number }>();
+
+function resolveQuantityKg(scale: ScaleEstimate | null | undefined): { kg: number | null; estimated: boolean } {
+    if (!scale || scale.raw_value == null || !scale.scale_type) return { kg: null, estimated: false };
+    if (scale.scale_type === "direct_kg") return { kg: scale.raw_value, estimated: false };
+    return { kg: estimateKgFromUnit(scale.scale_type, scale.raw_value), estimated: true };
+}
+
+function finalizeResult(llmData: LLMExtraction): ParsedSMSData {
+    const { kg, estimated } = resolveQuantityKg(llmData.scale_estimate);
+    return smsParserSchema.parse({
+        ...llmData,
+        quantity_kg: kg,
+        quantity_estimated: estimated,
+        urgency_level: computeUrgencyLevel(kg),
+        extracted_at: new Date().toISOString(),
+    });
+}
 
 export class LangchainSMSParser {
     private llm: ChatOpenAI;
@@ -20,7 +39,6 @@ export class LangchainSMSParser {
     }
 
     public async parseSMS(message: string): Promise<ParsedSMSData> {
-        // Check cache first
         const cached = cache.get(message);
         if (cached && Date.now() - cached.timestamp < 3600000) {
             return cached.data;
@@ -28,23 +46,22 @@ export class LangchainSMSParser {
 
         try {
             return await circuitBreaker.execute(async () => {
-                const structuredLlm = this.llm.withStructuredOutput(smsParserSchema);
+                const structuredLlm = this.llm.withStructuredOutput(llmExtractionSchema);
                 const chain = extractionPromptTemplate.pipe(structuredLlm);
-                const result = await chain.invoke({ message });
+                const rawResult = await chain.invoke({ message });
 
-                const finalResult = {
-                    ...result,
-                    extracted_at: result.extracted_at || new Date().toISOString(),
-                    confidence_score: result.confidence_score ?? 0.8
-                } as ParsedSMSData;
+                // Re-parse to normalize against our schema's defaults/types
+                // before it's safe to pass into finalizeResult.
+                const normalized = llmExtractionSchema.parse(rawResult);
+                const finalResult = finalizeResult(normalized);
 
-                // Cache successful results
                 cache.set(message, { data: finalResult, timestamp: Date.now() });
                 return finalResult;
             });
         } catch (error) {
             console.error("Langchain parser failed, using fallback:", error);
-            return getPartialExtraction(message) as ParsedSMSData;
+            const partial = getPartialExtraction(message);
+            return finalizeResult(partial);
         }
     }
 }
