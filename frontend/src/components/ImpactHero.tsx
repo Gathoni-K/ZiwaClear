@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { ShieldCheck, ArrowRight, Download, CheckCircle2 } from "lucide-react";
 import lakeHero from "../assets/lake-hero.jpg";
-import { api } from "../api/config";
+import { useImpactMetrics } from "../hooks/useImpactMetrics";
 
 export function ImpactHero() {
   const [downloading, setDownloading] = useState(false);
   const [downloadDone, setDownloadDone] = useState(false);
+  const { rawCumulative, isLoading } = useImpactMetrics();
 
-  async function handleViewReport() {
-    try {
-      const res = await api.batches.getImpact();
-      // Open impact data in a new tab as formatted JSON
-      const w = window.open("", "_blank");
-      if (w) {
-        w.document.write(`<pre>${JSON.stringify(res, null, 2)}</pre>`);
-      }
-    } catch {
-      alert("Could not load report. Please try again.");
+  function handleViewReport() {
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(`<pre>${JSON.stringify(rawCumulative, null, 2)}</pre>`);
     }
   }
 
@@ -25,28 +20,25 @@ export function ImpactHero() {
     setDownloadDone(false);
 
     try {
-      const impact = await api.batches.getImpact();
+      const date = new Date().toISOString().slice(0, 10);
       const csv = [
         "Metric,Value,Unit",
-        `Total Batches,${impact.data?.totalBatches ?? "N/A"},count`,
-        `Total Quantity,${impact.data?.totalQuantityKg ?? "N/A"},kg`,
-        `Methane Avoided,${impact.data?.methaneAvoided ?? "N/A"},tCO₂e`,
-        `Lake Area Restored,${impact.data?.lakeAreaRestored ?? "N/A"},m²`,
-        `Green Jobs,${impact.data?.greenJobs ?? "N/A"},jobs`,
+        `Surface Restored,${rawCumulative.surfaceRestoredM2},m²`,
+        `Biogas Generated,${rawCumulative.biogasGeneratedM3},m³`,
+        `CO2e Avoided,${rawCumulative.co2eAvoidedKg},kg`,
+        `CO2e Avoided,${rawCumulative.co2eAvoidedTonnes},tonnes`,
       ].join("\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `ziwaclear-esg-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `ziwaclear-esg-${date}.csv`;
       link.click();
       URL.revokeObjectURL(url);
 
       setDownloadDone(true);
       setTimeout(() => setDownloadDone(false), 3000);
-    } catch {
-      alert("Could not download ESG data. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -77,14 +69,15 @@ export function ImpactHero() {
           <button
             type="button"
             onClick={handleViewReport}
-            className="flex items-center gap-2 bg-primary text-background font-semibold text-xs md:text-sm px-4 py-2.5 rounded-pill hover:bg-primary-hover transition-colors w-full sm:w-auto justify-center"
+            disabled={isLoading}
+            className="flex items-center gap-2 bg-primary text-background font-semibold text-xs md:text-sm px-4 py-2.5 rounded-pill hover:bg-primary-hover transition-colors w-full sm:w-auto justify-center disabled:opacity-60"
           >
             View Detailed Report <ArrowRight size={14} className="md:size-[16px]" />
           </button>
           <button
             type="button"
             onClick={handleDownloadESG}
-            disabled={downloading}
+            disabled={downloading || isLoading}
             className="flex items-center gap-2 bg-white/10 text-white font-semibold text-xs md:text-sm px-4 py-2.5 rounded-pill hover:bg-white/15 transition-colors border border-white/20 w-full sm:w-auto justify-center disabled:opacity-60"
           >
             {downloadDone ? (
@@ -103,4 +96,4 @@ export function ImpactHero() {
       </div>
     </div>
   );
-}
+}

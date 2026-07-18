@@ -9,8 +9,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import type { TooltipItem } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import type { BiogasTrendPoint } from "../api/mockImpact";
+import type { BackendTrendPoint as BiogasTrendPoint } from "../types/impact";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -36,7 +37,7 @@ export function MethaneTrendCard({
     datasets: [
       {
         label: "m³",
-        data: data.map((d) => d.m3),
+        data: data.map((d) => d.biogasGeneratedM3),
         backgroundColor: barColor,
         borderRadius: 6,
         borderSkipped: false as const,
@@ -59,7 +60,7 @@ export function MethaneTrendCard({
         cornerRadius: 8,
         padding: 12,
         callbacks: {
-          label: (ctx: any) => `${ctx.parsed.y.toLocaleString()} m³`,
+          label: (ctx: TooltipItem<"bar">) => `${ctx.parsed.y.toLocaleString()} m³`,
         },
       },
     },
@@ -74,7 +75,7 @@ export function MethaneTrendCard({
         ticks: {
           color: "#94a3b8",
           font: { size: 10 },
-          callback: (value: any) => `${(value / 1000).toFixed(0)}k`,
+          callback: (value: number | string) => `${(Number(value) / 1000).toFixed(0)}k`,
         },
         border: { color: "#334155" },
         beginAtZero: false,
@@ -103,7 +104,7 @@ export function MethaneTrendCard({
         {data.slice(-3).map((d) => (
           <div key={d.month} className="flex-1 bg-input rounded-xl p-2 md:p-3 text-center">
             <p className="text-[10px] md:text-xs text-muted">{d.month}</p>
-            <p className="text-xs md:text-sm font-bold">{(d.m3 / 1000).toFixed(1)}k</p>
+            <p className="text-xs md:text-sm font-bold">{(d.biogasGeneratedM3 / 1000).toFixed(1)}k</p>
             <p className="text-[10px] text-muted">m³</p>
           </div>
         ))}
