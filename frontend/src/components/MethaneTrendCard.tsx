@@ -60,7 +60,7 @@ export function MethaneTrendCard({
         cornerRadius: 8,
         padding: 12,
         callbacks: {
-          label: (ctx: TooltipItem<"bar">) => `${ctx.parsed.y.toLocaleString()} m³`,
+          label: (ctx: TooltipItem<"bar">) => `${(ctx.parsed.y ?? 0).toLocaleString()} m³`,
         },
       },
     },
