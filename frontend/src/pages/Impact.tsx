@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Waves, TreePine, Fish } from "lucide-react";
+import { Droplet, Zap, Cloud } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ImpactHero } from "../components/ImpactHero";
 import { MetricCard } from "../components/MetricCard";
 import { MethaneTrendCard } from "../components/MethaneTrendCard";
@@ -7,63 +7,37 @@ import { SocialImpactCard } from "../components/SocialImpactCard";
 import { ProjectHealthMonitor } from "../components/ProjectHealthMonitor";
 import { KeyMilestones } from "../components/KeyMilestones";
 import { AppSideNav } from "../components/AppSideNav";
-import { api } from "../api/config";
-import type { ImpactMetric } from "../types/impact";
+import { useImpactMetrics } from "../hooks/useImpactMetrics";
+import type { ImpactMetric, ImpactCard } from "../types/impact";
 import {
-  MOCK_BIOGAS_TREND,
   MOCK_SOCIAL_IMPACT_METRIC,
   MOCK_MILESTONES,
   MOCK_AUDIT_PROGRESS_PERCENT,
 } from "../api/mockImpact";
 
-function Impact() {
-  const { data: impact, isLoading } = useQuery({
-    queryKey: ["impact"],
-    queryFn: async () => {
-      const res = await api.batches.getImpact();
-      return res.data ?? res;
-    },
-    refetchInterval: 30_000,
-  });
+const CARD_ICON_MAP: Record<ImpactCard["id"], LucideIcon> = {
+  "surface-restored": Droplet,
+  "biogas-generated": Zap,
+  "carbon-offset": Cloud,
+};
 
-  const liveMetrics: ImpactMetric[] = impact
-    ? [
-      {
-        id: "1",
-        icon: Waves,
-        label: "Surface Restored",
-        value: `${impact.lakeAreaClearedM2?.toLocaleString() ?? "0"} m²`,
-        description: "Lake area cleared of hyacinth",
-        trend: "up",
-      },
-      {
-        id: "2",
-        icon: TreePine,
-        label: "Carbon Offset",
-        value: `${impact.co2eAvoidedTonnes?.toLocaleString() ?? "0"} tCO₂e`,
-        description: "Methane emissions avoided",
-        badge: "Certified",
-      },
-      {
-        id: "3",
-        icon: Fish,
-        label: "Biomass Harvested",
-        value: `${impact.totalTonnes?.toLocaleString() ?? "0"} tonnes`,
-        description: "Total water hyacinth removed from the lake",
-      },
-    ]
-    : [];
-
-  // Methane card with live total
-  const methaneTotal = impact
-    ? `${(impact.co2eAvoidedTonnes * 1000).toLocaleString()} m³`
-    : "0 m³";
-
-  // Social impact with live jobs count
-  const socialImpact: ImpactMetric = {
-    ...MOCK_SOCIAL_IMPACT_METRIC,
-    value: impact?.greenJobs?.toLocaleString() ?? MOCK_SOCIAL_IMPACT_METRIC.value,
+function toImpactMetric(card: ImpactCard): ImpactMetric {
+  return {
+    id: card.id,
+    icon: CARD_ICON_MAP[card.id],
+    label: card.label,
+    value: card.value,
+    description: card.description,
   };
+}
+
+function Impact() {
+  const { cards, trend, isLoading } = useImpactMetrics();
+
+  const liveMetrics: ImpactMetric[] = cards.map(toImpactMetric);
+
+  const biogasCard = cards.find((c) => c.id === "biogas-generated");
+  const biogasTotalValue = biogasCard?.value ?? "—";
 
   return (
     <div className="flex flex-col lg:flex-row h-full">
@@ -72,7 +46,6 @@ function Impact() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4">
         <ImpactHero />
 
-        {/* Row 1: metric cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {isLoading
             ? [1, 2, 3].map((i) => (
@@ -90,22 +63,20 @@ function Impact() {
             ))}
         </div>
 
-        {/* Row 2: methane trend + social impact */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
           <div className="lg:col-span-2">
             <MethaneTrendCard
-              title="Methane Avoided"
-              subtitle="Climbing trend of biomethane captured from harvested hyacinth"
-              data={MOCK_BIOGAS_TREND}
-              totalLabel="Total Methane Avoided"
-              totalValue={methaneTotal}
+              title="Biogas Generated"
+              subtitle="Monthly biogas yield from claimed and collected hyacinth biomass"
+              data={trend}
+              totalLabel="Cumulative Biogas"
+              totalValue={biogasTotalValue}
               barColor="#2DD4BF"
             />
           </div>
-          <SocialImpactCard {...socialImpact} />
+          <SocialImpactCard {...MOCK_SOCIAL_IMPACT_METRIC} />
         </div>
 
-        {/* Row 3: project health + milestones */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
           <div className="lg:col-span-2">
             <ProjectHealthMonitor />
@@ -120,4 +91,4 @@ function Impact() {
   );
 }
 
-export default Impact;
+export default Impact;

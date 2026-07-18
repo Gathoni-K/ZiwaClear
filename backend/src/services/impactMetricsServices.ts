@@ -26,12 +26,19 @@ const IMPACT_ELIGIBLE_STATUSES = ["claimed", "collected"] as const;
 // known ratings, including NULL, falls back to DEFAULT_QUALITY_GRADE's
 // modifier, per spec. Expressed in SQL so the weighted sum runs as a single
 // DB aggregate instead of pulling every row into memory.
+//
+// NOTE: every branch is explicitly cast to ::real. JS does not distinguish
+// 1.0 from 1 (QUALITY_MODIFIERS.PREMIUM === 1), so without an explicit cast
+// Postgres receives untyped bound params that don't unify to a single type
+// across branches and silently falls back to `text`, which then blows up
+// downstream as `operator does not exist: real * text`. Do not remove
+// these casts even if the modifiers all "look like" floats in JS.
 function qualityModifierCaseExpr() {
     const whenClauses = Object.entries(QUALITY_RATING_TO_GRADE)
-        .map(([rating, grade]) => sql`WHEN ${Number(rating)} THEN ${QUALITY_MODIFIERS[grade]}`)
+        .map(([rating, grade]) => sql`WHEN ${Number(rating)} THEN ${QUALITY_MODIFIERS[grade]}::real`)
         .reduce((acc, clause) => sql`${acc} ${clause}`);
     const fallbackModifier = QUALITY_MODIFIERS[DEFAULT_QUALITY_GRADE];
-    return sql<number>`CASE ${batches.qualityRating} ${whenClauses} ELSE ${fallbackModifier} END`;
+    return sql<number>`CASE ${batches.qualityRating} ${whenClauses} ELSE ${fallbackModifier}::real END`;
 }
 
 export interface CumulativeImpactMetrics {

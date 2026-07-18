@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { batchService } from "../services/batchService";
+import { landingSiteService } from "../services/landingSiteService";
 import { impactMetricsService } from "../services/impactMetricsServices";
+import { qualityRatingToGrade, getActiveMass, activeMassToBiogasM3, activeMassToCO2eKg, rawMassToSurfaceM2 } from "../utils/ecologicalMath";
 
 export class BatchController {
     public async listAvailable(req: Request, res: Response) {
@@ -43,11 +45,11 @@ export class BatchController {
 
             if (!batch) return res.status(404).json({ success: false, message: "Batch not found" });
 
-            // NOTE: this per-batch yield preview uses a different, uncited
-            // 0.07 m3/kg factor than the sourced 0.0224 m3/kg wet-mass factor
-            // used in impactMetricsService.ts / ecologicalMath.ts. Flagging
-            // this inconsistency rather than silently changing it.
-            const biogasM3 = Math.round(batch.quantityKg * 0.07 * 100) / 100;
+            const grade = qualityRatingToGrade(batch.qualityRating);
+            const activeMass = getActiveMass(batch.quantityKg, grade);
+            const biogasM3 = activeMassToBiogasM3(activeMass);
+            const co2eKg = activeMassToCO2eKg(activeMass);
+            const surfaceAreaM2 = rawMassToSurfaceM2(batch.quantityKg);
             const fertilizerKgN = Math.round(batch.quantityKg * 0.002 * 1000) / 1000;
 
             return res.json({
@@ -56,6 +58,8 @@ export class BatchController {
                     ...batch,
                     yieldPredictions: {
                         biogasM3,
+                        co2eKg,
+                        surfaceAreaM2,
                         fertilizerKgN,
                         source: "Gunaseelan (1997), IPCC Wetlands Supplement (2014)"
                     }
@@ -193,6 +197,32 @@ export class BatchController {
         } catch (error) {
             console.error("[BatchController.delete] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    public async simulateCoverageSpike(req: Request, res: Response) {
+        try {
+            const { siteId, coveragePercentage, dominantQualityGrade } = req.body;
+            
+            if (!siteId || typeof coveragePercentage !== 'number' || !dominantQualityGrade) {
+                return res.status(400).json({ success: false, message: "Invalid payload" });
+            }
+
+            const result = await landingSiteService.evaluateCoverage(
+                parseInt(siteId.toString()), 
+                coveragePercentage, 
+                dominantQualityGrade
+            );
+
+            return res.json({ 
+                success: true, 
+                data: {
+                    site: result.site,
+                    smsAlertPayload: result.smsAlertPayload
+                }
+            });
+        } catch (error: any) {
+            return res.status(500).json({ success: false, message: error.message || "Internal server error" });
         }
     }
 }
