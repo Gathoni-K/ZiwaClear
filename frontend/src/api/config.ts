@@ -57,6 +57,11 @@ export const api = {
       if (!res.ok) throw new Error("Failed to fetch landing site");
       return res.json();
     },
+        getMetrics: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/landing-sites/metrics`);
+      if (!res.ok) throw new Error("Failed to fetch landing site metrics");
+      return res.json();
+    },
   },
   chat: {
     sendMessage: async (message: string) => {
