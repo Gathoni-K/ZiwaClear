@@ -9,9 +9,11 @@ export const batchRouter = Router();
 batchRouter.get("/", batchController.listAvailable);
 batchRouter.get("/all", batchController.list);
 batchRouter.get("/impact", batchController.getImpact);
+batchRouter.get("/impact/trend", batchController.getImpactTrend);
 batchRouter.get("/price", batchController.getPrice);
 batchRouter.get("/:id", batchController.getById);
-batchRouter.get("/impact/trend", batchController.getImpactTrend);
+
+batchRouter.post("/simulate-coverage-spike", batchController.simulateCoverageSpike);
 
 // Action routes
 batchRouter.post("/:id/claim", validateRequest(claimBatchValidator), batchController.claim);
