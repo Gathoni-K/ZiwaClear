@@ -46,6 +46,23 @@ export const api = {
       return res.json();
     },
   },
+    landingSites: {
+    getAll: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/landing-sites`);
+      if (!res.ok) throw new Error("Failed to fetch landing sites");
+      return res.json();
+    },
+    getById: async (id: string) => {
+      const res = await fetch(`${API_BASE_URL}/api/landing-sites/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch landing site");
+      return res.json();
+    },
+        getMetrics: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/landing-sites/metrics`);
+      if (!res.ok) throw new Error("Failed to fetch landing site metrics");
+      return res.json();
+    },
+  },
   chat: {
     sendMessage: async (message: string) => {
       const res = await fetch(`${API_BASE_URL}/api/chat`, {
