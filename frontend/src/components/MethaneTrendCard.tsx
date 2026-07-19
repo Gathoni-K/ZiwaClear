@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import type { TooltipItem } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import type { BiogasTrendPoint } from "../api/mockImpact";
 
@@ -59,7 +60,7 @@ export function MethaneTrendCard({
         cornerRadius: 8,
         padding: 12,
         callbacks: {
-          label: (ctx: any) => `${ctx.parsed.y.toLocaleString()} m³`,
+          label: (ctx: TooltipItem<"bar">) => `${ctx.parsed.y.toLocaleString()} m³`,
         },
       },
     },
@@ -74,7 +75,7 @@ export function MethaneTrendCard({
         ticks: {
           color: "#94a3b8",
           font: { size: 10 },
-          callback: (value: any) => `${(value / 1000).toFixed(0)}k`,
+          callback: (value: number | string) => `${(Number(value) / 1000).toFixed(0)}k`,
         },
         border: { color: "#334155" },
         beginAtZero: false,
