@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { batchService } from "../services/batchService";
+import { landingSiteService } from "../services/landingSiteService";
+import { impactMetricsService } from "../services/impactMetricsServices";
+import { qualityRatingToGrade, getActiveMass, activeMassToBiogasM3, activeMassToCO2eKg, rawMassToSurfaceM2 } from "../utils/ecologicalMath";
 
 export class BatchController {
     public async listAvailable(req: Request, res: Response) {
@@ -42,8 +45,11 @@ export class BatchController {
 
             if (!batch) return res.status(404).json({ success: false, message: "Batch not found" });
 
-
-            const biogasM3 = Math.round(batch.quantityKg * 0.07 * 100) / 100;
+            const grade = qualityRatingToGrade(batch.qualityRating);
+            const activeMass = getActiveMass(batch.quantityKg, grade);
+            const biogasM3 = activeMassToBiogasM3(activeMass);
+            const co2eKg = activeMassToCO2eKg(activeMass);
+            const surfaceAreaM2 = rawMassToSurfaceM2(batch.quantityKg);
             const fertilizerKgN = Math.round(batch.quantityKg * 0.002 * 1000) / 1000;
 
             return res.json({
@@ -52,6 +58,8 @@ export class BatchController {
                     ...batch,
                     yieldPredictions: {
                         biogasM3,
+                        co2eKg,
+                        surfaceAreaM2,
                         fertilizerKgN,
                         source: "Gunaseelan (1997), IPCC Wetlands Supplement (2014)"
                     }
@@ -101,12 +109,61 @@ export class BatchController {
         }
     }
 
+    /**
+     * Cumulative impact totals for the dashboard cards (Surface Restored,
+     * Biogas Generated, Carbon Offset). Replaces the old batchService.getImpactStats()
+     * call, which predates the sourced ecological math in impactMetricsService.ts.
+     *
+     * `icon` is intentionally omitted -- a LucideIcon reference isn't
+     * serializable over JSON. The frontend maps `id` -> icon locally.
+     * `trend`/`badge` are also omitted since neither is computable from
+     * raw kg sums without a prior-period comparison or a separate
+     * certification workflow, neither of which exist yet.
+     */
     public async getImpact(req: Request, res: Response) {
         try {
-            const impact = await batchService.getImpactStats();
-            return res.json({ success: true, data: impact });
+            const metrics = await impactMetricsService.getCumulativeImpactMetrics();
+
+            const data = [
+                {
+                    id: "surface-restored",
+                    label: "Surface Restored",
+                    value: `${metrics.surfaceRestoredM2.toLocaleString(undefined, { maximumFractionDigits: 0 })} m²`,
+                    description: "Cleaned water hyacinth coverage",
+                },
+                {
+                    id: "biogas-generated",
+                    label: "Sustainable Biogas Generated",
+                    value: `${metrics.biogasGeneratedM3.toLocaleString(undefined, { maximumFractionDigits: 0 })} m³`,
+                    description: "Cumulative biogas yield from claimed and collected biomass",
+                },
+                {
+                    id: "carbon-offset",
+                    label: "Carbon Offset",
+                    value: `${metrics.co2eAvoidedTonnes.toLocaleString(undefined, { maximumFractionDigits: 1 })} tonnes CO2e`,
+                    description: "Methane emissions avoided by diverting biomass from the lake",
+                },
+            ];
+
+            return res.json({ success: true, data });
         } catch (error) {
             console.error("[BatchController.getImpact] Error:", error);
+            return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    /**
+     * Monthly trend feeding the analytics graph. Exposes all three
+     * derived metrics per month (surface restored, biogas, CO2e), not
+     * just biogas m3, since the service computes all three from the
+     * same aggregate query at no extra cost.
+     */
+    public async getImpactTrend(req: Request, res: Response) {
+        try {
+            const trend = await impactMetricsService.getBiogasTrend();
+            return res.json({ success: true, data: trend });
+        } catch (error) {
+            console.error("[BatchController.getImpactTrend] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -140,6 +197,32 @@ export class BatchController {
         } catch (error) {
             console.error("[BatchController.delete] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    public async simulateCoverageSpike(req: Request, res: Response) {
+        try {
+            const { siteId, coveragePercentage, dominantQualityGrade } = req.body;
+            
+            if (!siteId || typeof coveragePercentage !== 'number' || !dominantQualityGrade) {
+                return res.status(400).json({ success: false, message: "Invalid payload" });
+            }
+
+            const result = await landingSiteService.evaluateCoverage(
+                parseInt(siteId.toString()), 
+                coveragePercentage, 
+                dominantQualityGrade
+            );
+
+            return res.json({ 
+                success: true, 
+                data: {
+                    site: result.site,
+                    smsAlertPayload: result.smsAlertPayload
+                }
+            });
+        } catch (error: any) {
+            return res.status(500).json({ success: false, message: error.message || "Internal server error" });
         }
     }
 }

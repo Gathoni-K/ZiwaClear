@@ -1,4 +1,5 @@
 import { Droplet, Cloud, Fish, Zap, Briefcase } from "lucide-react";
+import type { BackendTrendPoint } from "../types/impact";
 import type { ImpactMetric, Milestone } from "../types/impact";
 
 export const MOCK_IMPACT_METRICS: ImpactMetric[] = [
@@ -36,20 +37,15 @@ export const MOCK_BIOGAS_METRIC: ImpactMetric = {
     "Equivalent to powering 1,200 rural households for an entire calendar year through circular biomass conversion.",
 };
 
-export interface BiogasTrendPoint {
-  month: string;
-  m3: number;
-}
-
-export const MOCK_BIOGAS_TREND: BiogasTrendPoint[] = [
-  { month: "Jan", m3: 42000 },
-  { month: "Feb", m3: 48500 },
-  { month: "Mar", m3: 55000 },
-  { month: "Apr", m3: 61000 },
-  { month: "May", m3: 68500 },
-  { month: "Jun", m3: 74000 },
-  { month: "Jul", m3: 79500 },
-  { month: "Aug", m3: 85000 },
+export const MOCK_BIOGAS_TREND: BackendTrendPoint[] = [
+  { month: "Jan", biogasGeneratedM3: 42000, surfaceRestoredM2: 1000, co2eAvoidedKg: 5000 },
+  { month: "Feb", biogasGeneratedM3: 48500, surfaceRestoredM2: 1200, co2eAvoidedKg: 6000 },
+  { month: "Mar", biogasGeneratedM3: 55000, surfaceRestoredM2: 1400, co2eAvoidedKg: 7000 },
+  { month: "Apr", biogasGeneratedM3: 61000, surfaceRestoredM2: 1600, co2eAvoidedKg: 8000 },
+  { month: "May", biogasGeneratedM3: 68500, surfaceRestoredM2: 1800, co2eAvoidedKg: 9000 },
+  { month: "Jun", biogasGeneratedM3: 74000, surfaceRestoredM2: 2000, co2eAvoidedKg: 10000 },
+  { month: "Jul", biogasGeneratedM3: 79500, surfaceRestoredM2: 2200, co2eAvoidedKg: 11000 },
+  { month: "Aug", biogasGeneratedM3: 85000, surfaceRestoredM2: 2400, co2eAvoidedKg: 12000 },
 ];
 
 export const MOCK_SOCIAL_IMPACT_METRIC: ImpactMetric = {

@@ -1,6 +1,9 @@
 @import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
 /* 1. Set up the CSS variables for Light / Dark mode */
 @layer base {
 
@@ -60,3 +63,14 @@
 
 /* 3. Enable class-based dark mode variant for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

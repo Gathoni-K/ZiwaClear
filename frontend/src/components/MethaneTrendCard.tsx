@@ -11,7 +11,7 @@ import {
 } from "chart.js";
 import type { TooltipItem } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import type { BiogasTrendPoint } from "../api/mockImpact";
+import type { BackendTrendPoint as BiogasTrendPoint } from "../types/impact";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -37,7 +37,7 @@ export function MethaneTrendCard({
     datasets: [
       {
         label: "m³",
-        data: data.map((d) => d.m3),
+        data: data.map((d) => d.biogasGeneratedM3),
         backgroundColor: barColor,
         borderRadius: 6,
         borderSkipped: false as const,
@@ -104,7 +104,7 @@ export function MethaneTrendCard({
         {data.slice(-3).map((d) => (
           <div key={d.month} className="flex-1 bg-input rounded-xl p-2 md:p-3 text-center">
             <p className="text-[10px] md:text-xs text-muted">{d.month}</p>
-            <p className="text-xs md:text-sm font-bold">{(d.m3 / 1000).toFixed(1)}k</p>
+            <p className="text-xs md:text-sm font-bold">{(d.biogasGeneratedM3 / 1000).toFixed(1)}k</p>
             <p className="text-[10px] text-muted">m³</p>
           </div>
         ))}

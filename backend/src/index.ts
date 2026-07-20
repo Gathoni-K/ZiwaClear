@@ -15,7 +15,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+        : ["http://localhost:5173", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

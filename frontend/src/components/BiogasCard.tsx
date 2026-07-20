@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { ImpactMetric } from "../types/impact";
-import type { BiogasTrendPoint } from "../api/mockImpact";
+import type { BackendTrendPoint as BiogasTrendPoint } from "../types/impact";
 
 interface BiogasCardProps extends ImpactMetric {
   trendData: BiogasTrendPoint[];
@@ -63,7 +63,7 @@ export function BiogasCard({
             />
             <Area
               type="monotone"
-              dataKey="m3"
+              dataKey="biogasGeneratedM3"
               stroke={PRIMARY}
               strokeWidth={2}
               fill="url(#biogasFill)"
