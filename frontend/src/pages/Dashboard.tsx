@@ -8,6 +8,7 @@ import { useBatches } from "../hooks/useBatches";
 import { useClaimBatch } from "../hooks/useClaimBatch";
 import { useActiveBeach } from "../context/ActiveBeachContext";
 import { useLandingSites } from "../hooks/useLandingSites";
+import { SimulationPanel } from "../components/SimulationPanel";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -87,6 +88,8 @@ function Dashboard() {
 
       
       <BeachDetailSidebar />
+            {/* Simulation Panel */}
+      <SimulationPanel />
     </div>
   );
 }
