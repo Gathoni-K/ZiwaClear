@@ -15,7 +15,7 @@ export function LandingSiteAlert({
   siteName,
   coveragePercentage,
 }: LandingSiteAlertProps) {
-  const { label, bg, text } = coverageColor(coveragePercentage);
+  const { bg, text } = coverageColor(coveragePercentage);
 
   if (coveragePercentage <= 60) return null; // only show for red alert
 
