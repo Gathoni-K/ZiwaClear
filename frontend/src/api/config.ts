@@ -27,6 +27,15 @@ export const api = {
       if (!res.ok) throw new Error("Failed to fetch pricing information");
       return res.json();
     },
+        simulateCoverage: async (siteId: number, coveragePercentage: number, dominantQualityGrade: string) => {
+      const res = await fetch(`${API_BASE_URL}/api/batches/simulate-coverage-spike`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteId, coveragePercentage, dominantQualityGrade }),
+      });
+      if (!res.ok) throw new Error("Failed to simulate coverage spike");
+      return res.json();
+    },
     claim: async (id: string, buyerId: string) => {
   const res = await fetch(`${API_BASE_URL}/api/batches/${id}/claim`, {
     method: "POST",
