@@ -1,6 +1,6 @@
-import { and, inArray, sql } from "drizzle-orm";
+import { and, inArray, sql, gte } from "drizzle-orm";
 import { db } from "../db";
-import { batches } from "../db/schema";
+import { batches, alerts } from "../db/schema";
 import {
     QUALITY_MODIFIERS,
     QUALITY_RATING_TO_GRADE,
@@ -125,6 +125,33 @@ export class ImpactMetricsService {
                 co2eAvoidedKg: sumActiveMassKg * CO2E_KG_PER_ACTIVE_KG,
             };
         });
+    }
+
+    /**
+     * Time-to-response metric for the alert acknowledgment loop (Step 4).
+     * Extends the existing impact dashboard rather than a separate report:
+     * exposed at GET /api/batches/impact/alert-response.
+     */
+    public async getAlertResponseMetrics(windowDays = 30) {
+        const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+        const recent = await db.select().from(alerts).where(gte(alerts.sentAt, since));
+
+        const acknowledged = recent.filter((a) => a.acknowledgedAt);
+        const resolved = recent.filter((a) => a.resolvedAt);
+
+        const avgSeconds = (rows: typeof acknowledged, field: "acknowledgedAt" | "resolvedAt") =>
+            rows.length > 0
+                ? Math.round(rows.reduce((sum, a) => sum + ((a[field] as Date).getTime() - a.sentAt.getTime()) / 1000, 0) / rows.length)
+                : null;
+
+        return {
+            windowDays,
+            alertsSent: recent.length,
+            alertsAcknowledged: acknowledged.length,
+            alertsResolved: resolved.length,
+            avgTimeToAcknowledgeSeconds: avgSeconds(acknowledged, "acknowledgedAt"),
+            avgTimeToResolveSeconds: avgSeconds(resolved, "resolvedAt"),
+        };
     }
 }
 

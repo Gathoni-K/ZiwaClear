@@ -8,17 +8,17 @@ import { ToastContainer } from "../components/Toast";
 
 export function Layout() {
   const { pathname } = useLocation();
-  const isMainDashboard = pathname === "/dashboard";
+  const isDashboard = pathname.startsWith("/dashboard");
 
   return (
     <ChatWidgetProvider>
       <ActiveBeachProvider>
         <div className="min-h-screen flex flex-col bg-background text-foreground">
           <LandingNav />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 flex flex-col overflow-y-auto">
             <Outlet />
           </main>
-          {!isMainDashboard && <LandingFooter />}
+          {!isDashboard && <LandingFooter />}
           <AIChatWidget />
         </div>
         <ToastContainer />

@@ -10,13 +10,18 @@ import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import PublicImpact from "./pages/PublicImpact";
 import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   {
     path: "/dashboard",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Dashboard /> },
       { path: "claimed-batches", element: <ClaimedBatches /> },

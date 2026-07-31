@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, integer, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
 
 export const landingSites = pgTable("landing_sites", {
     id: serial("id").primaryKey(),
@@ -7,6 +7,12 @@ export const landingSites = pgTable("landing_sites", {
     coveragePercentage: integer("coverage_percentage").notNull().default(0),
     dominantQualityGrade: varchar("dominant_quality_grade", { length: 20 }).notNull().default("STANDARD"),
     operationalStatus: varchar("operational_status", { length: 20 }).notNull().default("SAFE"),
+    riskLevel: varchar("risk_level", { length: 20 }).notNull().default("normal"),
+    // Additional alert recipients for tiered, multi-recipient routing (Step 3).
+    // Nullable: not every site has a health officer or a flagged water point contact on record.
+    countyHealthOfficerPhone: varchar("county_health_officer_phone", { length: 20 }),
+    waterOfficerPhone: varchar("water_officer_phone", { length: 20 }),
+    isBlockingWaterPoint: boolean("is_blocking_water_point").notNull().default(false),
     latitude: decimal("latitude", { precision: 10, scale: 7 }),
     longitude: decimal("longitude", { precision: 10, scale: 7 }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

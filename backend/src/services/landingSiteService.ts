@@ -1,58 +1,88 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { landingSites } from "../db/schema";
-import { smsClient } from "../utils/africasTalking";
+import { weatherService } from "./weatherService";
+import { coverageTrendService } from "./coverageTrendService";
+import { riskScoringService, RiskLevel } from "./riskScoringService";
+import { alertService } from "./alertService";
 
 export class LandingSiteService {
     public async evaluateCoverage(siteId: number, coveragePercentage: number, dominantQualityGrade: string) {
+        // 1. Fetch site
+        const [existingSite] = await db.select().from(landingSites).where(eq(landingSites.id, siteId));
+        if (!existingSite) throw new Error("Landing site not found");
+
+        // 2. Record this coverage reading to history
+        await coverageTrendService.recordCoverage(siteId, coveragePercentage, dominantQualityGrade);
+
+        return this.evaluateRisk(siteId, coveragePercentage, dominantQualityGrade, existingSite.bmuLeaderPhone);
+    }
+
+    public async evaluateRisk(siteId: number, currentCoverage?: number, currentGrade?: string, bmuLeaderPhone?: string | null) {
+        const [site] = await db.select().from(landingSites).where(eq(landingSites.id, siteId));
+        if (!site) throw new Error("Landing site not found");
+
+        const coverage = currentCoverage ?? site.coveragePercentage;
+        const grade = currentGrade ?? site.dominantQualityGrade;
+
+        // Compute coverage trend
+        const coverageTrend = await coverageTrendService.getTrend(siteId);
+
+        // Fetch weather and temp anomaly
+        const lat = site.latitude ? Number(site.latitude) : -0.0917;
+        const lng = site.longitude ? Number(site.longitude) : 34.7680;
+        
+        const { tempAnomaly, rainfall } = await weatherService.getCurrentWeather(site.name, lat, lng);
+
+        // Calculate predictive risk level
+        const riskLevel = riskScoringService.calculateRiskLevel({
+            coverage,
+            coverageTrend,
+            tempAnomaly,
+            rainfall
+        });
+
+        // Map to operationalStatus for backwards compatibility
         let operationalStatus = "SAFE";
-        let smsAlertPayload = null;
+        if (riskLevel === "emergency") operationalStatus = "RED_ALERT";
+        else if (riskLevel === "warning" || riskLevel === "watch") operationalStatus = "MONITOR";
 
-        if (coveragePercentage > 60) {
-            operationalStatus = "RED_ALERT";
-        } else if (coveragePercentage >= 35) {
-            operationalStatus = "MONITOR";
-        }
-
+        // Persist updates
         const updatedSites = await db.update(landingSites)
             .set({
-                coveragePercentage,
-                dominantQualityGrade,
+                coveragePercentage: coverage,
+                dominantQualityGrade: grade,
                 operationalStatus,
+                riskLevel,
                 updatedAt: new Date()
             })
             .where(eq(landingSites.id, siteId))
             .returning();
 
-        const site = updatedSites[0];
-        
-        if (!site) {
-            throw new Error("Landing site not found");
-        }
+        const updatedSite = updatedSites[0];
+        if (!updatedSite) throw new Error("Failed to persist landing site risk update");
 
-        if (operationalStatus === "RED_ALERT") {
-            smsAlertPayload = `ZiwaClear Alert: High-density hyacinth bloom detected at ${site.name} (${coveragePercentage}% coverage). Direct your youth harvesters to this zone today to maximize yield and lock in ${dominantQualityGrade} Payout Rates. Reply with BATCH to log harvests.`;
+        // Tiered, multi-recipient alert dispatch (watch/warning/emergency).
+        // "normal" tier dispatches nothing — see AlertService for rationale.
+        const dispatchedAlerts = await alertService.dispatchAlert({
+            site: {
+                id: updatedSite.id,
+                name: updatedSite.name,
+                bmuLeaderPhone: bmuLeaderPhone || updatedSite.bmuLeaderPhone,
+                countyHealthOfficerPhone: updatedSite.countyHealthOfficerPhone,
+                waterOfficerPhone: updatedSite.waterOfficerPhone,
+                isBlockingWaterPoint: updatedSite.isBlockingWaterPoint,
+            },
+            riskLevel,
+            coverage,
+            coverageTrend,
+        });
 
-            // Dispatch the alert to the BMU leader's phone via Africa's Talking.
-            // Non-fatal: a send failure is logged but does not roll back the
-            // coverage update that already succeeded.
-            if (site.bmuLeaderPhone) {
-                try {
-                    await smsClient.send({
-                        to: [site.bmuLeaderPhone],
-                        message: smsAlertPayload,
-                        from: process.env.AT_SHORTCODE || "5862",
-                    });
-                } catch (smsError) {
-                    console.error("[LandingSiteService] Failed to send RED_ALERT SMS to BMU leader:", smsError);
-                }
-            }
-        }
+        // Kept for backwards compatibility with callers/UI expecting a single
+        // string (e.g. the BMU leader's message, if one was sent this tier).
+        const smsAlertPayload = dispatchedAlerts.find(a => a.recipientRole === "bmu_leader")?.message ?? null;
 
-        return {
-            site,
-            smsAlertPayload
-        };
+        return { site: updatedSite, smsAlertPayload, alerts: dispatchedAlerts };
     }
 }
 

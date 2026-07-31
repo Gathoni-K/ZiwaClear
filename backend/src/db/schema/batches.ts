@@ -1,6 +1,7 @@
 import { pgTable, text, integer, timestamp, uuid, varchar, real, pgPolicy } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { beaches } from "./beaches";
+import { harvesters } from "./harvesters";
 
 export const batches = pgTable("batches", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -11,6 +12,7 @@ export const batches = pgTable("batches", {
     longitude: real("longitude"),
     status: text("status", { enum: ["available", "claimed", "collected", "flagged"] }).default("available").notNull(),
     harvesterPhone: varchar("harvester_phone", { length: 20 }).notNull(),
+    harvesterId: uuid("harvester_id").references(() => harvesters.id),
     harvesterName: varchar("harvester_name", { length: 255 }),
     buyerId: uuid("buyer_id"),
     qualityRating: integer("quality_rating"),

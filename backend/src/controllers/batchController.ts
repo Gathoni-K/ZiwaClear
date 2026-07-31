@@ -3,6 +3,9 @@ import { batchService } from "../services/batchService";
 import { landingSiteService } from "../services/landingSiteService";
 import { impactMetricsService } from "../services/impactMetricsServices";
 import { qualityRatingToGrade, getActiveMass, activeMassToBiogasM3, activeMassToCO2eKg, rawMassToSurfaceM2 } from "../utils/ecologicalMath";
+import { initiateMockB2CPayout } from "../services/mpesaService";
+import { db } from "../db";
+import { transactions } from "../db/schema";
 
 export class BatchController {
     public async listAvailable(req: Request, res: Response) {
@@ -79,7 +82,10 @@ export class BatchController {
                 return res.status(400).json({ success: false, message: "Invalid ID" });
             }
 
-            const { buyerId } = req.body;
+            const buyerId = (req as any).user?.buyerId || req.body.buyerId;
+            if (!buyerId) {
+                return res.status(400).json({ success: false, message: "Missing buyer ID" });
+            }
             const batch = await batchService.claimBatch(id, buyerId);
             return res.json({ success: true, data: batch, message: "Batch claimed successfully" });
         } catch (error: any) {
@@ -100,7 +106,30 @@ export class BatchController {
 
             const { qualityRating, notes } = req.body;
             const batch = await batchService.collectBatch(id, qualityRating, notes);
-            return res.json({ success: true, data: batch, message: "Batch collected successfully" });
+
+            if (!batch) {
+                return res.status(404).json({ success: false, message: "Batch not found" });
+            }
+
+            const payoutAmount = batch.quantityKg * 9;
+            const payout = await initiateMockB2CPayout(batch.harvesterPhone, payoutAmount);
+
+            if (payout.success && batch.buyerId) {
+                await db.insert(transactions).values({
+                    batchId: batch.id,
+                    buyerId: batch.buyerId,
+                    payoutAmount,
+                    mpesaReceiptNumber: payout.receiptNumber,
+                    status: "paid",
+                });
+            }
+
+            return res.json({
+                success: true,
+                data: batch,
+                message: "Batch collected successfully",
+                mpesaReceiptNumber: payout.receiptNumber,
+            });
         } catch (error: any) {
             console.error("[BatchController.collect] Error:", error);
             if (error.message === "Batch not found") return res.status(404).json({ success: false, message: error.message });
@@ -164,6 +193,22 @@ export class BatchController {
             return res.json({ success: true, data: trend });
         } catch (error) {
             console.error("[BatchController.getImpactTrend] Error:", error);
+            return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    /**
+     * Alert acknowledgment/resolution time-to-response metric — extends the
+     * impact dashboard (Step 4). Demo can watch this move as alerts fire
+     * and get acknowledged during the recorded run.
+     */
+    public async getAlertResponseMetrics(req: Request, res: Response) {
+        try {
+            const windowDays = req.query.windowDays ? parseInt(req.query.windowDays as string) : 30;
+            const data = await impactMetricsService.getAlertResponseMetrics(windowDays);
+            return res.json({ success: true, data });
+        } catch (error) {
+            console.error("[BatchController.getAlertResponseMetrics] Error:", error);
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
