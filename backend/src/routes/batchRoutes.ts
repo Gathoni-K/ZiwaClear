@@ -2,6 +2,7 @@ import { Router } from "express";
 import { batchController } from "../controllers/batchController";
 import { validateRequest } from "../middleware/requestValidator";
 import { claimBatchValidator, collectBatchValidator } from "../validations/batchValidator";
+import { authenticateUser, requireRole } from "../middleware/auth";
 
 export const batchRouter = Router();
 
@@ -10,6 +11,7 @@ batchRouter.get("/", batchController.listAvailable);
 batchRouter.get("/all", batchController.list);
 batchRouter.get("/impact", batchController.getImpact);
 batchRouter.get("/impact/trend", batchController.getImpactTrend);
+batchRouter.get("/impact/alert-response", batchController.getAlertResponseMetrics);
 batchRouter.get("/price", batchController.getPrice);
 
 // Named POST routes must be declared BEFORE the /:id wildcard so Express
@@ -20,8 +22,8 @@ batchRouter.post("/simulate-coverage-spike", batchController.simulateCoverageSpi
 batchRouter.get("/:id", batchController.getById);
 
 // Action routes
-batchRouter.post("/:id/claim", validateRequest(claimBatchValidator), batchController.claim);
-batchRouter.post("/:id/collect", validateRequest(collectBatchValidator), batchController.collect);
+batchRouter.post("/:id/claim", authenticateUser, requireRole(["buyer", "admin"]), validateRequest(claimBatchValidator), batchController.claim);
+batchRouter.post("/:id/collect", authenticateUser, requireRole(["buyer", "admin"]), validateRequest(collectBatchValidator), batchController.collect);
 
 // Admin
-batchRouter.delete("/:id", batchController.delete);
+batchRouter.delete("/:id", authenticateUser, requireRole(["admin"]), batchController.delete);

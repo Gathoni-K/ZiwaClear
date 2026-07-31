@@ -1,4 +1,4 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { extractionPromptTemplate } from "./parser/parserPrompts";
 import { ParsedSMSData, LLMExtraction, llmExtractionSchema, smsParserSchema, ScaleEstimate } from "./parser/parserSchema";
 import { CircuitBreaker, getPartialExtraction } from "./parser/parserFallback";
@@ -26,15 +26,14 @@ function finalizeResult(llmData: LLMExtraction): ParsedSMSData {
 }
 
 export class LangchainSMSParser {
-    private llm: ChatOpenAI;
+    private llm: ChatGoogleGenerativeAI;
 
     constructor() {
-        this.llm = new ChatOpenAI({
-            modelName: process.env.LLM_MODEL || "gpt-3.5-turbo",
+        this.llm = new ChatGoogleGenerativeAI({
+            model: process.env.LLM_MODEL || "gemini-2.0-flash",
             temperature: 0.1,
-            timeout: 15000,
             maxRetries: 3,
-            apiKey: process.env.OPENAI_API_KEY,
+            apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
         });
     }
 
