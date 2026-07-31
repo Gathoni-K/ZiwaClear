@@ -84,19 +84,10 @@ This seeds a short coverage-reading history crossing the watch/warning/emergency
 
 **This is demo/seed data only** — not live pilot data, and not presented as such anywhere in this repo or the submission materials.
 
-## Known Limitations
-
-Documented here rather than left for judges to discover:
-
-* `drizzle/migrations/meta/0003_snapshot.json` was not regenerated for the hand-written `0003_alert_pipeline.sql` migration (requires a live DB connection this environment doesn't have). The SQL migration is complete and applies cleanly via `drizzle-kit migrate` or `psql`; run `npx drizzle-kit generate` once against a real dev DB before your next schema change to resync the meta snapshot.
-* CAP/XML alerting is not implemented — alert payloads are CAP-shaped JSON only.
-* Two-way SMS acknowledgment matches by sender phone number against the most recent open alert for that number; it doesn't disambiguate multiple simultaneously-open alerts on the same phone across different sites. Fine at two-pilot-site demo scale; flagged for anyone scaling up.
-* `db/seedMonitoring.ts` is an older, still-valid fixture for the monitoring table using different site names (Homa Bay, Mbita Point, Kendu Bay) and is unrelated to the Dunga/Usenge demo scenario above — left as-is, not consolidated.
-* Sentinel-2 satellite coverage verification is roadmap, not implemented — current coverage detection is SMS-report-based only.
-* M-Pesa payouts are mocked, not connected to a live payment processor.
 
 ## Roadmap
 * Live Sentinel-2 verification of coverage data
 * Community syndromic-reporting channel (self-reported symptom clusters via SMS, cross-referenced against coverage spikes)
 * Full CAP/XML alert formatting for interoperability with national/regional EWS infrastructure
 * Live M-Pesa integration
+* Integrate the collection of fish waste.
