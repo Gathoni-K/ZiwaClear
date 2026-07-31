@@ -1,34 +1,47 @@
+import { supabase } from "../lib/supabase";
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers = new Headers(options.headers || {});
+  
+  if (session?.access_token) {
+    headers.set("Authorization", `Bearer ${session.access_token}`);
+  }
+  
+  return fetch(url, { ...options, headers });
+}
 
 export const api = {
   batches: {
     getAll: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/all`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/all`);
       if (!res.ok) throw new Error("Failed to fetch batches");
       return res.json();
     },
     getAvailable: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/batches`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches`);
       if (!res.ok) throw new Error("Failed to fetch available batches");
       return res.json();
     },
     getById: async (id: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/${id}`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/${id}`);
       if (!res.ok) throw new Error("Failed to fetch batch");
       return res.json();
     },
     getImpact: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/impact`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/impact`);
       if (!res.ok) throw new Error("Failed to fetch impact metrics");
       return res.json();
     },
     getPrice: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/price`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/price`);
       if (!res.ok) throw new Error("Failed to fetch pricing information");
       return res.json();
     },
-        simulateCoverage: async (siteId: number, coveragePercentage: number, dominantQualityGrade: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/simulate-coverage-spike`, {
+    simulateCoverage: async (siteId: number, coveragePercentage: number, dominantQualityGrade: string) => {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/simulate-coverage-spike`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ siteId, coveragePercentage, dominantQualityGrade }),
@@ -37,17 +50,16 @@ export const api = {
       return res.json();
     },
     claim: async (id: string, buyerId: string) => {
-  const res = await fetch(`${API_BASE_URL}/api/batches/${id}/claim`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ buyerId }),
-  });
-  if (!res.ok) throw new Error("Failed to claim batch");
-  return res.json();
-
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/${id}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buyerId }),
+      });
+      if (!res.ok) throw new Error("Failed to claim batch");
+      return res.json();
     },
     collect: async (id: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/batches/${id}/collect`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/batches/${id}/collect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -55,26 +67,26 @@ export const api = {
       return res.json();
     },
   },
-    landingSites: {
+  landingSites: {
     getAll: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/landing-sites`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/landing-sites`);
       if (!res.ok) throw new Error("Failed to fetch landing sites");
       return res.json();
     },
     getById: async (id: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/landing-sites/${id}`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/landing-sites/${id}`);
       if (!res.ok) throw new Error("Failed to fetch landing site");
       return res.json();
     },
-        getMetrics: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/landing-sites/metrics`);
+    getMetrics: async () => {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/landing-sites/metrics`);
       if (!res.ok) throw new Error("Failed to fetch landing site metrics");
       return res.json();
     },
   },
   chat: {
     sendMessage: async (message: string) => {
-      const res = await fetch(`${API_BASE_URL}/api/chat`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),

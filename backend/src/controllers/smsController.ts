@@ -1,11 +1,39 @@
 import { Request, Response } from "express";
 import { smsService } from "../services/smsService";
 import { smsClient } from "../utils/africasTalking";
+import { alertService } from "../services/alertService";
 
 export class SMSController {
     public async receiveSMS(req: Request, res: Response) {
         try {
             const { text, from } = req.body;
+
+            // Two-way ack loop: RECEIVED / CLEARED replies resolve against the
+            // most recent open alert for this phone instead of being parsed
+            // as a harvest report.
+            const ack = await alertService.handleAcknowledgment(text, from);
+            if (ack.matched) {
+                const ackReply = ack.keyword === "RECEIVED"
+                    ? `Asante. Umethibitisha kupokea tahadhari ya ${ack.siteName}. (Alert #${ack.alertId} acknowledged.)`
+                    : `Asante. Umethibitisha ${ack.siteName} imetatuliwa. (Alert #${ack.alertId} cleared.)`;
+
+                try {
+                    await smsClient.send({
+                        to: [from],
+                        message: ackReply,
+                        from: process.env.AFRICASTALKING_SHORTCODE || "5862",
+                    });
+                } catch (smsError) {
+                    console.error("Failed to send ack confirmation SMS:", smsError);
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    type: "alert_acknowledgment",
+                    alert_id: ack.alertId,
+                    status: ack.keyword === "RECEIVED" ? "acknowledged" : "cleared",
+                });
+            }
 
             const result = await smsService.processIncomingSMS(text, from);
 
@@ -26,7 +54,7 @@ export class SMSController {
                 await smsClient.send({
                     to: [from],
                     message: replyMessage,
-                    from: process.env.AT_SHORTCODE || "5862",
+                    from: process.env.AFRICASTALKING_SHORTCODE || "5862",
                 });
             } catch (smsError) {
                 console.error("Failed to send reply SMS:", smsError);

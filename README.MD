@@ -1,60 +1,102 @@
 # 🌿 ZiwaClear
-> **From Ecological Crisis to Circular Economy** > A biomass marketplace platform transforming Lake Victoria's water hyacinth infestation into a renewable resource, connecting off-grid youth harvesters with commercial biogas and fertilizer producers.
+> **Early Warning and Early Action for a Climate-Driven Lake Crisis**
+> A real-time SMS/USSD monitoring and alerting platform that detects water hyacinth bloom risk early and triggers rapid harvester and health-agency response — turning cleared biomass into income for rural youth, restoring Lake Victoria's blue economy, and strengthening regional food security.
+
+Built for the IGAD Hackathon 2026.
 
 ---
 
 ## The Problem
-Lake Victoria is currently facing an unprecedented ecological crisis due to the rapid spread of water hyacinth (doubling in biomass every 14 days). 
-* **Economic Devastation:** Causes **$80M** in annual fishery losses across Kenya, Uganda, and Tanzania.
-* **Climate Hazard:** Infested waters emit 25–100 mg of methane per m²/day.
-* **Socio-Economic Challenge:** Lakeside communities face up to **55% youth unemployment**.
 
-Existing solutions focus on expensive mechanical harvesting or slow biological controls. The real bottleneck is a **coordination failure**: buyers need the biomass, and locals need jobs, but there is no logistical or informational infrastructure connecting them.
+Lake Victoria's Winam Gulf is trapped in a climate-driven feedback loop:
 
-## What It Does (The Solution)
-ZiwaClear doesn't harvest hyacinth or produce biogas itself. Instead, it provides the missing digital infrastructure—information, coordination, trust, and logistics—enabling existing actors to transact efficiently.
+* **Fishery collapse:** a 66% catch decline across a market millions depend on directly or indirectly. <!-- TODO: confirm this figure against the deck's cited source (IPBES/IGAD Report 2024) and use identical wording in both places -->
+* **Disease vector expansion:** 17,000 hectares of stagnant-mat habitat breeding malaria mosquitoes and bilharzia-host snails, and blocking clean water points.
+* **Proven health correlation:** hyacinth coverage and cholera incidence move together (r=0.83, P=0.0010) in Nyanza. <!-- source: Feikin et al., AJTMH/PubMed -->
+* **Climate acceleration:** rising temperatures and altered rainfall/runoff are shortening bloom-recovery cycles, not just sustaining them.
+* **Youth unemployment:** up to 61% in lakeside communities. <!-- TODO: reconcile with the 55% figure previously used here; pick one number and cite it identically in the deck and this README -->
 
-Our platform operates on three integrated layers:
-1. **Supply Side (Harvesters):** Off-grid youth use basic feature phones to log their harvested biomass via SMS/USSD using natural language (Swahili, English, or Sheng). 
-2. **Demand Side (Buyers):** Commercial producers access a live, interactive web dashboard showing real-time biomass inventory, mapping, and routing. 
-3. **Intelligence Layer:** An AI-powered engine processes incoming SMS data, calculates yields (biogas output, fertilizer yield), and tracks impact metrics (methane avoided, lake area cleared).
+20+ years and $70M+ in donor-funded mechanical and biological removal have failed, because clearance carries no economic incentive and stops the moment funding ends. The bottleneck isn't harvesting capacity — it's coordination: buyers don't know what's available, harvesters don't know who's buying, and nobody is warned before a bloom becomes a health or food-security emergency.
+
+## The Solution
+
+ZiwaClear doesn't harvest hyacinth or produce biogas itself. It provides the missing infrastructure — detection, prediction, alerting, and market coordination — so existing actors (harvesters, buyers, health agencies) can act before a crisis escalates, and so harvesting itself pays enough to be self-sustaining without ongoing donor funding.
+
+The system runs a four-stage loop: **Detect → Predict → Alert → Act (with Acknowledgment)**.
+
+### 1. Detect — Supply side (harvesters, SMS/USSD)
+A harvester texts a harvest report in natural language — English, Swahili, or Sheng, using real local units like "gunia" or "fuso" — to the Africa's Talking shortcode. `POST /api/sms/incoming` first checks whether the message is a `RECEIVED`/`CLEARED` reply to an open alert (routed to the acknowledgment loop, see below); otherwise it's parsed by an LLM-based parser (regex fallback if no `LLM_MODEL` is configured) into location, quantity, and quality. A `batches` row is created and the harvester is upserted by phone number. A Swahili confirmation SMS is sent back.
+
+### 2. Predict — Risk scoring
+Every time coverage is reported for a landing site (via real SMS ingestion, the coverage-spike simulation endpoint, or a manual trigger), the system:
+- pulls current temperature/precipitation from Open-Meteo (cached hourly),
+- computes a temperature *anomaly* against a hardcoded seasonal baseline for that site (never an absolute cutoff),
+- derives a coverage trend (`rising_fast` / `rising_slow` / `flat` / `falling`) from the last 3 readings,
+- and evaluates risk tier — `emergency > warning > watch > normal`, highest severity first — persisting `riskLevel` on the landing site.
+
+### 3. Alert — Tiered, multi-recipient dispatch
+The BMU leader is notified on any non-normal tier; the county health officer is added on warning/emergency, given the documented cholera correlation; a water/WASH officer is added if the site is flagged as blocking a water point. Each dispatch is CAP-shaped (`eventType`, `severity`, `area`, `timestamp`, `recommendedAction`) without a full CAP/XML implementation. The `normal` tier never dispatches SMS, to avoid alert fatigue on routine readings.
+
+### 4. Act & Acknowledge — Closing the loop
+Harvesters mobilize at premium payout rates. Recipients reply `RECEIVED` or `CLEARED` by SMS to close the loop against that alert, with a timestamp. `GET /api/batches/impact/alert-response` reports average time-to-acknowledge/time-to-resolve — the metric that proves the loop actually closes, not just fires.
+
+### Demand side — Buyers (React dashboard)
+Buyers log in via Supabase auth, gated both client-side (`ProtectedRoute`) and server-side (claim/collect/delete). They see live available batches on a Leaflet map and sidebar (`GET /api/batches`), claim them (`POST /:id/claim`), and collect them (`POST /:id/collect`), which triggers a mock M-Pesa payout and marks the batch `collected`. The Impact page computes cumulative surface area restored, biogas generated, and CO2e avoided from real conversion factors on `claimed`/`collected` batches only.
 
 ## 🛠 Tech Stack
-We built a scalable, lean, full-stack JavaScript/TypeScript architecture:
 
-**Frontend (Demand Side)**
-* **React & TypeScript:** Robust, type-safe web dashboard for commercial buyers.
-* **Leaflet.js:** Interactive mapping for real-time inventory geolocation and logistics routing.
+**Frontend:** React, TypeScript, Leaflet.js
+**Backend:** Node.js, Supabase (Postgres + Drizzle ORM), TypeScript
+**AI & Integrations:** Africa's Talking (SMS/USSD), LangChain / Vercel AI SDK (NLP parsing), Open-Meteo (weather), M-Pesa API (mock payouts in this build)
 
-**Backend & Database**
-* **Node.js & Supabase:** Fast, secure database and backend logic for handling users, transactions, and inventory.
-* **TypeScript Yield Predictor:** Custom logic utilizing peer-reviewed conversion factors to calculate carbon offsets and biomethane yields.
-
-**AI & Integrations (Supply Side & Payments)**
-* **Africa's Talking API:** Handles SMS/USSD communication for offline users without smartphones.
-* **LangChain & Vercel AI SDK:** NLP agents that parse unstructured SMS messages (e.g., "I got 50kg at Dunga") into structured database records.
-* **M-Pesa API:** Facilitates instant digital wallet payouts to harvesters upon batch confirmation.
-
-##  How It Works
-1. **Log Biomass:** A harvester pulls hyacinth from the lake and texts *"Nimevuna 100kg Dunga Beach"* to the ZiwaClear shortcode.
-2. **AI Parsing:** The LangChain NLP agent parses the location, weight, and harvester ID, instantly updating the Supabase database.
-3. **Marketplace Matching:** The batch appears on the buyer's interactive Leaflet map. 
-4. **Claim & Pay:** A biogas producer claims the batch. The system calculates the logistics route, and upon confirmation, triggers an instant M-Pesa payout to the harvester.
-
-##  Measurable Impact
-ZiwaClear is designed for immediate socio-economic and environmental returns. By Year 3, our projections target:
-* **800 Green Jobs:** Active youth harvesters earning 2–3× the typical rural daily wage.
-* **5,000 tCO₂e Methane Avoided:** Equivalent to removing 1,087 passenger vehicles from the road.
-* **36,000 m² Lake Restored:** Enhancing biodiversity and restoring local fisheries.
-
-*(All metrics are calculated using transparent conversion factors in our Node backend, making the platform fully carbon-credit ready).*
-
----
-
-## Running Locally
+## Getting Started
 
 ### Prerequisites
-* Node.js (v18+)
-* Supabase Account
-* Africa's Talking Sandbox Account
+* Node.js v18+
+* A Supabase project (Postgres connection string)
+* An Africa's Talking sandbox account
+* Copy `.env.example` to `.env` and fill in: Supabase connection string, `AFRICASTALKING_SHORTCODE`, Africa's Talking API key, `LLM_MODEL` (optional — omit to use the regex fallback parser only)
 
+### Install & run
+```bash
+# backend
+cd backend
+npm install
+npx drizzle-kit migrate      # applies all migrations, including 0003_alert_pipeline.sql
+npm run db:seed              # base beaches / buyer / harvester data
+npm run dev
+
+# frontend
+cd frontend
+npm install
+npm run dev
+```
+
+### Running the demo scenario
+There is no funded pilot deployment. Dunga and Usenge are used as demo pilot sites only.
+
+```bash
+cd backend
+npm run db:seed:demo-scenario
+```
+
+This seeds a short coverage-reading history crossing the watch/warning/emergency boundaries, realistic multilingual SMS fixtures, and runs one full **Detect → Predict → Alert → Act → Acknowledge** scenario through the real services (not hardcoded JSON), logging each step to the console so it can be shown live alongside the dashboard's Simulation Panel.
+
+**This is demo/seed data only** — not live pilot data, and not presented as such anywhere in this repo or the submission materials.
+
+## Known Limitations
+
+Documented here rather than left for judges to discover:
+
+* `drizzle/migrations/meta/0003_snapshot.json` was not regenerated for the hand-written `0003_alert_pipeline.sql` migration (requires a live DB connection this environment doesn't have). The SQL migration is complete and applies cleanly via `drizzle-kit migrate` or `psql`; run `npx drizzle-kit generate` once against a real dev DB before your next schema change to resync the meta snapshot.
+* CAP/XML alerting is not implemented — alert payloads are CAP-shaped JSON only.
+* Two-way SMS acknowledgment matches by sender phone number against the most recent open alert for that number; it doesn't disambiguate multiple simultaneously-open alerts on the same phone across different sites. Fine at two-pilot-site demo scale; flagged for anyone scaling up.
+* `db/seedMonitoring.ts` is an older, still-valid fixture for the monitoring table using different site names (Homa Bay, Mbita Point, Kendu Bay) and is unrelated to the Dunga/Usenge demo scenario above — left as-is, not consolidated.
+* Sentinel-2 satellite coverage verification is roadmap, not implemented — current coverage detection is SMS-report-based only.
+* M-Pesa payouts are mocked, not connected to a live payment processor.
+
+## Roadmap
+* Live Sentinel-2 verification of coverage data
+* Community syndromic-reporting channel (self-reported symptom clusters via SMS, cross-referenced against coverage spikes)
+* Full CAP/XML alert formatting for interoperability with national/regional EWS infrastructure
+* Live M-Pesa integration

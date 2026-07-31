@@ -1,12 +1,13 @@
 import { useBatches } from "../hooks/useBatches";
 import { BatchCard } from "./BatchCard";
-import {LandingSiteAlert } from "./LandingSiteAlert";
+import { LandingSiteAlert } from "./LandingSiteAlert";
+import type { RiskLevel } from "./LandingSiteAlert";
 
 interface SidebarProps {
   selectedBatchId: string | null;
   onSelectBatch: (id: string) => void;
   onReserve: (batchId: string) => void;
-  alertSites?: Array<{ id: number; name: string; coveragePercentage: number }>;
+  alertSites?: Array<{ id: number; name: string; coveragePercentage: number; riskLevel: RiskLevel }>;
 }
 
 export function Sidebar({ selectedBatchId, onSelectBatch, onReserve, alertSites =[] }: SidebarProps) {
@@ -20,6 +21,7 @@ export function Sidebar({ selectedBatchId, onSelectBatch, onReserve, alertSites 
           key={site.id}
           siteName={site.name}
           coveragePercentage={site.coveragePercentage}
+          riskLevel={site.riskLevel}
         />
       ))}
       <div className="flex items-center justify-between">

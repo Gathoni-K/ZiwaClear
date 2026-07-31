@@ -8,6 +8,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:demo-scenario": "tsx src/db/seeds/seedDemoScenario.ts",
     "db:push": "drizzle-kit push",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -20,8 +21,10 @@
   "dependencies": {
     "@ai-sdk/google": "^4.0.11",
     "@langchain/core": "^1.2.0",
+    "@langchain/google-genai": "^2.2.0",
     "@langchain/openai": "^1.5.1",
     "@safaricom-et/mpesa-node-js-sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.111.0",
     "africastalking": "^0.8.0",
     "ai": "^7.0.18",
     "axios": "^1.18.0",

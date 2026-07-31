@@ -1,6 +1,6 @@
 import { eq, and, gte, sql } from "drizzle-orm";
 import { db } from "../db";
-import { sms, beaches } from "../db/schema";
+import { sms, beaches, harvesters } from "../db/schema";
 import { smsParser } from "./sms/smsParser";
 import { batchService } from "./batchService";
 import { ParsedSMSData } from "./sms/parser/parserSchema";
@@ -58,10 +58,20 @@ export class SMSService {
             // }
 
             if (quantityKg && locationName) {
+                let [harvester] = await db.select().from(harvesters).where(eq(harvesters.phoneNumber, senderPhone));
+                if (!harvester) {
+                    const [newHarvester] = await db.insert(harvesters).values({
+                        phoneNumber: senderPhone,
+                        status: "pending",
+                    }).returning();
+                    harvester = newHarvester;
+                }
+
                 const batch = await batchService.createBatchFromSMS({
                     quantityKg,
                     locationName,
                     harvesterPhone: senderPhone,
+                    harvesterId: harvester!.id,
                     beachId
                 });
 

@@ -7,6 +7,7 @@ export class BatchService {
         quantityKg: number;
         locationName: string;
         harvesterPhone: string;
+        harvesterId: string;
         beachId?: number | null;
     }) {
         let latitude: number | null = null;
@@ -38,6 +39,7 @@ export class BatchService {
             latitude: latitude || coords?.lat || null,
             longitude: longitude || coords?.lng || null,
             harvesterPhone: data.harvesterPhone,
+            harvesterId: data.harvesterId,
             status: "available",
         }).returning();
 

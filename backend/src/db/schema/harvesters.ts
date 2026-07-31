@@ -6,6 +6,7 @@ export const harvesters = pgTable("harvesters", {
     phoneNumber: text("phone_number").notNull().unique(),
     name: text("name"),
     location: text("location"),
+    status: text("status", { enum: ["pending", "verified"] }).default("pending").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
     pgPolicy("Lock down harvester information", {
