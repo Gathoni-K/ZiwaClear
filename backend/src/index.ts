@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
-import { db } from "./db";
-import { sql } from "drizzle-orm";
+// import { db } from "./db";
+// import { sql } from "drizzle-orm";
 
 import { smsRouter } from "./routes/smsRoutes";
 import { batchRouter } from "./routes/batchRoutes";
