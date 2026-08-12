@@ -252,7 +252,7 @@ export class BatchController {
             if (!siteId || typeof coveragePercentage !== 'number' || !dominantQualityGrade) {
                 return res.status(400).json({ success: false, message: "Invalid payload" });
             }
-
+            
             const result = await landingSiteService.evaluateCoverage(
                 parseInt(siteId.toString()), 
                 coveragePercentage, 
@@ -263,7 +263,8 @@ export class BatchController {
                 success: true, 
                 data: {
                     site: result.site,
-                    smsAlertPayload: result.smsAlertPayload
+                    smsAlertPayload: result.smsAlertPayload,
+                    alerts: result.alerts
                 }
             });
         } catch (error: any) {

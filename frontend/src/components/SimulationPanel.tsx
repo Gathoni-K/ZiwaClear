@@ -33,8 +33,12 @@ export function SimulationPanel() {
       // Refresh landing sites data so the alert system reacts instantly
       queryClient.invalidateQueries({ queryKey: ["landing-sites"] });
 
-      if (result.data?.smsAlertPayload) {
-        console.log("SMS Alert triggered:", result.data.smsAlertPayload);
+      if (result.data?.alerts && result.data.alerts.length > 0) {
+        result.data.alerts.forEach((alert: any) => {
+          toast(`📱 SMS Sent to ${alert.recipientRole.replace(/_/g, " ")}: ${alert.message}`, "success");
+        });
+      } else if (result.data?.smsAlertPayload) {
+        toast(`📱 SMS Alert: ${result.data.smsAlertPayload}`, "success");
       }
     } catch (error) {
       toast("Failed to inject payload. Is the backend running?", "error");

@@ -30,7 +30,7 @@ export class LangchainSMSParser {
 
     constructor() {
         this.llm = new ChatGoogleGenerativeAI({
-            model: process.env.LLM_MODEL || "gemini-2.0-flash",
+            model: process.env.LLM_MODEL || "gemini-1.5-flash",
             temperature: 0.1,
             maxRetries: 3,
             apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
