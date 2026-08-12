@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, Droplet, Zap, Cloud, Scale } from "lucide-react";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardMap } from "../components/DashboardMap";
-import { BatchDetailPanel } from "../components/BatchDetailPanel";
+
 import { BeachDetailSidebar } from "../components/BeachDetailSidebar";
 import { SimulationPanel } from "../components/SimulationPanel";
 import { MetricCard } from "../components/MetricCard";
@@ -24,8 +24,6 @@ function Dashboard() {
   const claimMutation = useClaimBatch();
   const { setActiveBeach } = useActiveBeach();
   const { rawCumulative, isLoading: metricsLoading } = useImpactMetrics();
-
-  const selectedBatch = batches?.find((b) => b.id === selectedBatchId) ?? null;
 
   const alertSites = Array.isArray(sites)
     ? sites.filter((s) => s.riskLevel !== "normal")
@@ -122,16 +120,7 @@ function Dashboard() {
               selectedBatchId={selectedBatchId}
               onSelectBatch={handleSelectBatch}
             />
-            {selectedBatch && (
-              <BatchDetailPanel
-                batch={selectedBatch}
-                onClose={() => {
-                  setSelectedBatchId(null);
-                  setActiveBeach(null);
-                }}
-                onReserve={handleReserve}
-              />
-            )}
+
           </div>
 
           <div className="flex flex-col gap-6 p-6 w-full">
@@ -166,7 +155,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <BeachDetailSidebar />
+        <BeachDetailSidebar onReserve={handleReserve} />
       </div>
     </div>
   );
